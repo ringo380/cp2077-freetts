@@ -5,7 +5,7 @@ quickhack list only. Import `dist/FreeTTS-0.1.0.zip`, confirm the deployed
 DLL hash matches the staged one, then work down the list. Where a step asks
 for a log line, the line is the result; what you heard is extra.
 
-The log is `red4ext/logs/red4ext-<date>.log` in the game folder. Lines from
+The log is `red4ext/logs/freetts-<date>.log` in the game folder. Lines from
 this mod carry `[FreeTTS]`.
 
 ## Before launching
@@ -34,16 +34,20 @@ this mod carry `[FreeTTS]`.
    spoken, the old one cut off if it was still talking.
 7. Move up and down quickly through four or five rows. One `speaking:` line
    per row, and the voice keeps up: it says the current row, not a backlog.
-8. Stay on one row while RAM regenerates for a few seconds. **No** new
-   `speaking:` line for that row. (This is the dedup; a repeat here is a
-   defect.)
+8. Stay on a row you can already afford while RAM regenerates for a few
+   seconds. **No** new `speaking:` line for that row. (This is the dedup; a
+   repeat here is a defect. A row that was locked for RAM and becomes
+   affordable is a different phrase and is meant to re-speak.)
 9. Highlight a hack you cannot afford. Spoken as
    `<name>, <n> RAM, locked, <reason>`; the log line matches.
 10. Close the list, reopen it on the same enemy. The first row is spoken
     again (one new `speaking:` line), even though it is the same hack as
     before.
 11. Switch to a different enemy with the list open. The first row for the
-    new target is spoken.
+    new target is spoken. Open question for this run: if the new target's
+    first row is word-for-word the same phrase and the panel never hid in
+    between, it may stay silent. Note whether that happened; it is a
+    design choice to make, not a defect.
 
 ## Quickhack list, out of combat
 

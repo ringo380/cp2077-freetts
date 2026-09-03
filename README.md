@@ -63,11 +63,11 @@ under Settings > Time & Language > Speech.
 
 ## Troubleshooting
 
-Open `red4ext/logs/red4ext-<date>.log` in the game folder.
+Open `red4ext/logs/freetts-<date>.log` in the game folder.
 
-- No line containing `FreeTTS loaded`: the plugin was not loaded. Check the
-  game version against Requirements, and that the DLL is at exactly the
-  path above (one folder deep under `red4ext/plugins`).
+- No `freetts-<date>.log` file for this launch at all: the plugin was not
+  loaded. Check the game version against Requirements, and that the DLL is
+  at exactly the path above (one folder deep under `red4ext/plugins`).
 - `FreeTTS loaded` but no `SAPI voice ready`: Windows could not create a
   voice. The line after it names the failing call. Confirm a voice exists
   under Settings > Time & Language > Speech.
