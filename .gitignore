@@ -1,0 +1,14 @@
+# Staged/packaged output ready for Vortex import
+/dist/
+
+# Native build artifacts. No bare `bin/` rule: bin/x64/... is a game-relative
+# source path in this family of mods, and a `bin/` rule would exclude it.
+build/
+out/
+*.obj
+*.pdb
+
+# Editor/OS cruft
+.vs/
+*.user
+Thumbs.db
