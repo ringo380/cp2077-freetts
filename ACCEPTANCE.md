@@ -86,8 +86,10 @@ this mod carry `[FreeTTS]`. A spoken phrase logs as
     spoken, the previous cut off if still talking.
 19. Move back to the first choice. It is spoken again (a different key,
     so no dedup).
-20. A greyed-out option (failed attribute check, or already read) is
-    spoken with ", unavailable" on the end.
+20. An option you cannot pick (a failed attribute check, or one the game
+    marks inactive) is spoken with ", unavailable" on the end. A line you
+    have already heard is dimmed but still selectable, so it is spoken
+    plainly.
 21. A timed choice (progress bar under the list) is spoken the moment it
     appears. Judge whether the Dialogue rate needs to be higher than the
     quickhack one; that is what the second slider is for.
@@ -98,6 +100,9 @@ this mod carry `[FreeTTS]`. A spoken phrase logs as
 23. Pick a choice. The list closes; nothing more is spoken for it. Open
     the next choice list in the same conversation: its highlighted choice
     is spoken, even if the text matches the last one (different hub id).
+    Two `speaking` lines back to back here, the first cut off at once, is
+    the hub and the index arriving on separate frames; not a defect
+    unless the wrong one is what you end up hearing.
 24. Turn "Speak dialogue choices" off, apply, open a choice list. Silence
     and no `speaking` line; quickhacks still speak if their switch is on.
 

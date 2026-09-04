@@ -99,7 +99,16 @@ public func FreeTTS_BuildChoicePhrase(choice: ListChoiceData) -> String {
       }
     }
   }
-  let phrase: String = NotEquals(tags, "") ? tags + ", " + text : text;
+  // "[Leave]" splits into a tag and no text; speak the tag alone then,
+  // as SetChoiceText shows it alone.
+  let phrase: String;
+  if Equals(text, "") {
+    phrase = tags;
+  } else if Equals(tags, "") {
+    phrase = text;
+  } else {
+    phrase = tags + ", " + text;
+  }
   if ChoiceTypeWrapper.IsType(choice.type, gameinteractionsChoiceType.Inactive)
     || ChoiceTypeWrapper.IsType(choice.type, gameinteractionsChoiceType.CheckFailed) {
     phrase += ", unavailable";
