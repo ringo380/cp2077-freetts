@@ -33,6 +33,12 @@ private let m_freeTtsLastPhrase: String;
 @addField(QuickhacksListGameController)
 private let m_freeTtsPendingRow: String;
 
+// Set when the panel became visible with no row waiting: the selection is
+// arriving after the show instead of before it, so the next spoken row
+// carries the RAM readout. The two wraps cover both orders.
+@addField(QuickhacksListGameController)
+private let m_freeTtsAnnounceRam: Bool;
+
 // "RAM <current> of <max>", from the same stat and stat pool the panel's own
 // memory bar reads.
 public func FreeTTS_BuildRamPhrase(game: GameInstance, player: ref<GameObject>) -> String {
@@ -79,6 +85,10 @@ private final func SelectData(data: ref<QuickhackData>) -> Void {
     this.m_freeTtsPendingRow = phrase;
     return;
   }
+  if this.m_freeTtsAnnounceRam {
+    this.m_freeTtsAnnounceRam = false;
+    phrase = FreeTTS_BuildRamPhrase(GetGameInstance(), this.GetPlayerControlledObject()) + ", " + phrase;
+  }
   let rate: Int32 = IsDefined(settings) ? settings.quickhackRate : 0;
   if !FreeTTS_Speak(phrase, rate) {
     FTLogWarning("[FreeTTS] no voice available, not spoken: " + phrase);
@@ -97,6 +107,7 @@ private final func SetVisibility(value: Bool) -> Void {
   if !value {
     this.m_freeTtsLastPhrase = "";
     this.m_freeTtsPendingRow = "";
+    this.m_freeTtsAnnounceRam = false;
     return;
   }
   if wasVisible || !this.GetRootWidget().IsVisible() {
@@ -107,11 +118,14 @@ private final func SetVisibility(value: Bool) -> Void {
     this.m_freeTtsPendingRow = "";
     return;
   }
-  let phrase: String = FreeTTS_BuildRamPhrase(GetGameInstance(), this.GetPlayerControlledObject());
-  if NotEquals(this.m_freeTtsPendingRow, "") {
-    phrase += ", " + this.m_freeTtsPendingRow;
-    this.m_freeTtsPendingRow = "";
+  if Equals(this.m_freeTtsPendingRow, "") {
+    // No row yet: the selection follows the show. SelectData adds the RAM.
+    this.m_freeTtsAnnounceRam = true;
+    return;
   }
+  let phrase: String = FreeTTS_BuildRamPhrase(GetGameInstance(), this.GetPlayerControlledObject())
+    + ", " + this.m_freeTtsPendingRow;
+  this.m_freeTtsPendingRow = "";
   let rate: Int32 = IsDefined(settings) ? settings.quickhackRate : 0;
   if !FreeTTS_Speak(phrase, rate) {
     FTLogWarning("[FreeTTS] no voice available, not spoken: " + phrase);

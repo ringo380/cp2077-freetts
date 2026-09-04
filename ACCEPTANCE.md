@@ -33,10 +33,11 @@ this mod carry `[FreeTTS]`. A spoken phrase logs as
 5. Open the quickhack list on an enemy. The log gains one
    `speaking (rate 0): RAM <current> of <max>, <name>, <n> RAM` line and
    that whole phrase is spoken: your RAM first, then the first row. The
-   two numbers match the panel's own RAM readout.
-   - Only the row, no RAM prefix: the panel was already visible when the
-     row was selected (a target switch, see 11) or the RAM readout ran
-     before the panel showed. Note which.
+   two numbers match the panel's own RAM readout; if the current value
+   is off by exactly one, the spoken number is the truer one (the panel
+   rounds a percentage), note it, not a defect.
+   - Only the row, no RAM prefix, or `RAM ...` on its own line first: a
+     defect in the open-order handling. Record which shape you saw.
 6. Move the highlight down one row. One new `speaking:` line, the new row
    spoken, the old one cut off if it was still talking.
 7. Move up and down quickly through four or five rows. One `speaking:` line
