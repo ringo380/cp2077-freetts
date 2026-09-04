@@ -31,7 +31,12 @@ this mod carry `[FreeTTS]`. A spoken phrase logs as
 ## Quickhack list, combat
 
 5. Open the quickhack list on an enemy. The log gains one
-   `speaking (rate 0): <name>, <n> RAM` line and the first row is spoken.
+   `speaking (rate 0): RAM <current> of <max>, <name>, <n> RAM` line and
+   that whole phrase is spoken: your RAM first, then the first row. The
+   two numbers match the panel's own RAM readout.
+   - Only the row, no RAM prefix: the panel was already visible when the
+     row was selected (a target switch, see 11) or the RAM readout ran
+     before the panel showed. Note which.
 6. Move the highlight down one row. One new `speaking:` line, the new row
    spoken, the old one cut off if it was still talking.
 7. Move up and down quickly through four or five rows. One `speaking:` line
@@ -42,9 +47,10 @@ this mod carry `[FreeTTS]`. A spoken phrase logs as
    affordable is a different phrase and is meant to re-speak.)
 9. Highlight a hack you cannot afford. Spoken as
    `<name>, <n> RAM, locked, <reason>`; the log line matches.
-10. Close the list, reopen it on the same enemy. The first row is spoken
-    again (one new `speaking:` line), even though it is the same hack as
-    before.
+10. Close the list, reopen it on the same enemy. RAM and the first row
+    are spoken again (one new `speaking` line), even though it is the
+    same hack as before. If you spent RAM in between, the number is the
+    new one.
 11. Switch to a different enemy with the list open. The first row for the
     new target is spoken. Open question for this run: if the new target's
     first row is word-for-word the same phrase and the panel never hid in

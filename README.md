@@ -20,7 +20,8 @@ item removes the need to read it at all.
   "Short Circuit, 8 RAM, locked, not enough RAM".
 - Cycling quickly cuts the previous item off; you always hear the one that
   is highlighted now.
-- Opening the list announces the first row. Changes the game makes on its
+- Opening the list announces your RAM and then the first row, as one
+  phrase: "RAM 8 of 12, Overheat, 6 RAM". Changes the game makes on its
   own (RAM regenerating, a cooldown ending) do not repeat the row you are
   already on.
 - When a dialogue choice list is open, every time the highlight moves, the

@@ -26,6 +26,22 @@ public native func FreeTTS_IsReady() -> Bool;
 @addField(QuickhacksListGameController)
 private let m_freeTtsLastPhrase: String;
 
+// A row highlighted while the panel is still hidden. The game selects row 0
+// (PopulateData) before it shows the panel (SetVisibility), so the first row
+// waits here and is spoken together with the RAM readout once the panel is
+// actually on screen.
+@addField(QuickhacksListGameController)
+private let m_freeTtsPendingRow: String;
+
+// "RAM <current> of <max>", from the same stat and stat pool the panel's own
+// memory bar reads.
+public func FreeTTS_BuildRamPhrase(game: GameInstance, player: ref<GameObject>) -> String {
+  let id: EntityID = player.GetEntityID();
+  let max: Int32 = FloorF(GameInstance.GetStatsSystem(game).GetStatValue(Cast<StatsObjectID>(id), gamedataStatType.Memory));
+  let current: Int32 = FloorF(GameInstance.GetStatPoolsSystem(game).GetStatPoolValue(Cast<StatsObjectID>(id), gamedataStatPoolType.Memory, false));
+  return "RAM " + IntToString(current) + " of " + IntToString(max);
+}
+
 // "<title>, <cost> RAM[, locked[, <reason>]]". A row that only says there are
 // no quickhacks is spoken as its title alone.
 public func FreeTTS_BuildPhrase(data: ref<QuickhackData>) -> String {
@@ -59,19 +75,46 @@ private final func SelectData(data: ref<QuickhackData>) -> Void {
     return;
   }
   this.m_freeTtsLastPhrase = phrase;
+  if !this.GetRootWidget().IsVisible() {
+    this.m_freeTtsPendingRow = phrase;
+    return;
+  }
   let rate: Int32 = IsDefined(settings) ? settings.quickhackRate : 0;
   if !FreeTTS_Speak(phrase, rate) {
     FTLogWarning("[FreeTTS] no voice available, not spoken: " + phrase);
   }
 }
 
-// Closing the panel forgets the last phrase, so reopening it announces the
-// first row again even when it is the same hack as before.
+// Opening the panel speaks the RAM readout and the row that was waiting for
+// it as one phrase. Closing it forgets the last phrase, so reopening it
+// announces the first row again even when it is the same hack as before.
+// The vanilla SetVisibility(true) can decline to open (no target, panel
+// blocked); the visibility of the root widget is what says it really did.
 @wrapMethod(QuickhacksListGameController)
 private final func SetVisibility(value: Bool) -> Void {
+  let wasVisible: Bool = this.GetRootWidget().IsVisible();
   wrappedMethod(value);
   if !value {
     this.m_freeTtsLastPhrase = "";
+    this.m_freeTtsPendingRow = "";
+    return;
+  }
+  if wasVisible || !this.GetRootWidget().IsVisible() {
+    return;
+  }
+  let settings: ref<FreeTTSSettings> = FreeTTSSettings.Get(GetGameInstance());
+  if IsDefined(settings) && !settings.quickhacksEnabled {
+    this.m_freeTtsPendingRow = "";
+    return;
+  }
+  let phrase: String = FreeTTS_BuildRamPhrase(GetGameInstance(), this.GetPlayerControlledObject());
+  if NotEquals(this.m_freeTtsPendingRow, "") {
+    phrase += ", " + this.m_freeTtsPendingRow;
+    this.m_freeTtsPendingRow = "";
+  }
+  let rate: Int32 = IsDefined(settings) ? settings.quickhackRate : 0;
+  if !FreeTTS_Speak(phrase, rate) {
+    FTLogWarning("[FreeTTS] no voice available, not spoken: " + phrase);
   }
 }
 
