@@ -1,8 +1,9 @@
 # FreeTTS
 
 An accessibility mod for Cyberpunk 2077. It speaks the currently highlighted
-quickhack aloud, through the Windows text-to-speech voice, as you cycle
-through the list. No more squinting at the quickhack wheel mid-fight.
+quickhack or dialogue choice aloud, through the Windows text-to-speech
+voice, as you move through the list. No more squinting at the quickhack
+wheel mid-fight, or at a timed dialogue prompt.
 
 ## Why this exists
 
@@ -22,10 +23,20 @@ item removes the need to read it at all.
 - Opening the list announces the first row. Changes the game makes on its
   own (RAM regenerating, a cooldown ending) do not repeat the row you are
   already on.
+- When a dialogue choice list is open, every time the highlight moves, the
+  mod speaks the new choice the way it is shown: the tag first if it has
+  one, then the line, and "unavailable" for a greyed-out option. For
+  example: "Leave" or "Corpo, I know how these deals work" or "Body, force
+  the door, unavailable". Opening the list announces the highlighted
+  choice.
+- Quickhacks and dialogue each have their own on/off switch and speech
+  rate, so timed dialogue can be read faster than the quickhack list. See
+  Settings below.
 - It uses the voice Windows already has. Nothing is downloaded, nothing
   leaves your machine.
 
-Nothing else is spoken yet. Other briefly shown lists are planned.
+Phone and text-message choices, the radio, and the weapon wheel are not
+spoken yet.
 
 ## Requirements
 
@@ -37,6 +48,8 @@ Nothing else is spoken yet. Other briefly shown lists are planned.
 - **redscript** (the script compiler that runs at game launch).
 - Windows 10 or 11 with at least one text-to-speech voice installed. Every
   stock install has Microsoft David and Microsoft Zira.
+- Optional: **Mod Settings** (the `mod_settings` RED4ext plugin) for the
+  in-game settings page. Without it everything is on and both rates are 0.
 
 Cyber Engine Tweaks is not required.
 
@@ -48,6 +61,7 @@ them into your game folder at these paths:
 ```
 red4ext/plugins/FreeTTS/FreeTTS.dll
 r6/scripts/FreeTTS/FreeTTS.reds
+r6/scripts/FreeTTS/FreeTTSSettings.reds
 ```
 
 With Vortex, import the release zip; it already has this layout. Vortex
@@ -55,11 +69,23 @@ reads no name or version from a local archive, so type these in the mod
 details pane by hand:
 
 - Name: FreeTTS
-- Version: 0.1.0
+- Version: 0.2.0
 - Author: ringo
 
-Which voice speaks, and how fast, is whatever Windows is set to. Change it
-under Settings > Time & Language > Speech.
+## Settings
+
+With Mod Settings installed, FreeTTS appears under Settings > Mods, and in
+Mod Configuration Menu if you use that. Two groups, two entries each:
+
+- **Quickhacks**: Speak quickhacks (on/off), Quickhack speech rate.
+- **Dialogue**: Speak dialogue choices (on/off), Dialogue speech rate.
+
+A rate runs from -10 (slowest) to 10 (fastest); 0 is the voice's own speed.
+The rate for a group is greyed out while that group is off. Changes apply
+the next time something is spoken; no restart.
+
+Which voice speaks is whatever Windows is set to. Change it under
+Settings > Time & Language > Speech.
 
 ## Troubleshooting
 
@@ -71,11 +97,15 @@ Open `red4ext/logs/freetts-<date>.log` in the game folder.
 - `FreeTTS loaded` but no `SAPI voice ready`: Windows could not create a
   voice. The line after it names the failing call. Confirm a voice exists
   under Settings > Time & Language > Speech.
-- `speaking: ...` lines appear but you hear nothing: the voice is working
-  and the game is calling it. Check the Windows volume mixer; the speech
-  plays through the default output device, not the game's.
-- Neither `speaking:` nor any warning when you cycle the list: the script
+- `speaking (rate n): ...` lines appear but you hear nothing: the voice is
+  working and the game is calling it. Check the Windows volume mixer; the
+  speech plays through the default output device, not the game's.
+- Neither `speaking` nor any warning when you cycle the list: the script
   did not compile. Look in `r6/logs/redscript_r*.log`.
+- One list is silent and the other is not: check its switch under
+  Settings > Mods > FreeTTS.
+- No FreeTTS entry under Settings > Mods: Mod Settings is not installed.
+  The mod still works with its defaults.
 
 ## Building from source
 

@@ -4,6 +4,7 @@
 #include <objbase.h>
 #include <sapi.h>
 
+#include <algorithm>
 #include <atomic>
 #include <condition_variable>
 #include <cstdio>
@@ -16,7 +17,16 @@ namespace
 std::mutex                  s_mutex;
 std::condition_variable     s_wake;
 std::thread                 s_thread;
-std::optional<std::wstring> s_pending; // single slot: a new request replaces an unspoken one
+// One utterance: what to say and how fast. Rate travels with the text so the
+// worker, the only thread that touches the voice, is also the only one that
+// calls SetRate.
+struct Request
+{
+    std::wstring text;
+    long         rate = 0;
+};
+
+std::optional<Request> s_pending; // single slot: a new request replaces an unspoken one
 bool                        s_stop    = false;
 bool                        s_started = false;
 std::atomic<bool>           s_ready{false};
@@ -82,23 +92,36 @@ void Worker()
     s_ready = true;
     Info("SAPI voice ready");
 
+    long currentRate = 0;
+
     for (;;)
     {
-        std::optional<std::wstring> text;
+        std::optional<Request> request;
         {
             std::unique_lock lock(s_mutex);
             s_wake.wait(lock, [] { return s_stop || s_pending.has_value(); });
             if (s_stop)
                 break;
-            text = std::move(s_pending);
+            request = std::move(s_pending);
             s_pending.reset();
+        }
+
+        // SetRate applies to the next Speak, so it goes first. A failure is
+        // logged and the text is still spoken at whatever rate the voice has.
+        if (request->rate != currentRate)
+        {
+            const HRESULT rateHr = voice->SetRate(request->rate);
+            if (FAILED(rateHr))
+                ErrorHr("ISpVoice::SetRate", rateHr);
+            else
+                currentRate = request->rate;
         }
 
         // Purge first so cycling quickly through a list cuts the previous item
         // off instead of queueing it; async so this loop is free to accept the
         // next request while the voice is still talking.
-        const HRESULT speakHr =
-            voice->Speak(text->empty() ? nullptr : text->c_str(), SPF_ASYNC | SPF_PURGEBEFORESPEAK, nullptr);
+        const HRESULT speakHr = voice->Speak(request->text.empty() ? nullptr : request->text.c_str(),
+                                             SPF_ASYNC | SPF_PURGEBEFORESPEAK, nullptr);
         if (FAILED(speakHr))
             ErrorHr("ISpVoice::Speak", speakHr);
     }
@@ -149,14 +172,14 @@ bool IsReady()
     return s_ready.load();
 }
 
-bool Say(const std::string& aUtf8)
+bool Say(const std::string& aUtf8, int aRate)
 {
     if (!s_ready.load())
         return false;
 
     {
         std::lock_guard lock(s_mutex);
-        s_pending = ToWide(aUtf8);
+        s_pending = Request{ToWide(aUtf8), static_cast<long>(std::clamp(aRate, -10, 10))};
     }
     s_wake.notify_one();
     return true;

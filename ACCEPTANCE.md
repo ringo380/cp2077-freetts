@@ -1,12 +1,14 @@
 # FreeTTS - in-game acceptance checklist
 
-**0.1.0 (2026-09-02): first build, needs a run.** Proof of concept: the
-quickhack list only. Import `dist/FreeTTS-0.1.0.zip`, confirm the deployed
-DLL hash matches the staged one, then work down the list. Where a step asks
-for a log line, the line is the result; what you heard is extra.
+**0.2.0 (2026-09-04): dialogue choices and a settings page, needs a run.**
+0.1.0 (quickhacks only) was never run in-game, so this run covers both.
+Import `dist/FreeTTS-0.2.0.zip`, confirm the deployed DLL hash matches the
+staged one, then work down the list. Where a step asks for a log line, the
+line is the result; what you heard is extra.
 
 The log is `red4ext/logs/freetts-<date>.log` in the game folder. Lines from
-this mod carry `[FreeTTS]`.
+this mod carry `[FreeTTS]`. A spoken phrase logs as
+`speaking (rate <n>): <phrase>`; `<n>` is the rate slider for that list.
 
 ## Before launching
 
@@ -29,7 +31,7 @@ this mod carry `[FreeTTS]`.
 ## Quickhack list, combat
 
 5. Open the quickhack list on an enemy. The log gains one
-   `speaking: <name>, <n> RAM` line and the first row is spoken.
+   `speaking (rate 0): <name>, <n> RAM` line and the first row is spoken.
 6. Move the highlight down one row. One new `speaking:` line, the new row
    spoken, the old one cut off if it was still talking.
 7. Move up and down quickly through four or five rows. One `speaking:` line
@@ -56,13 +58,56 @@ this mod carry `[FreeTTS]`.
 13. Open the list on something with no hacks available. The "no
     quickhacks" row is spoken by its title alone, with no RAM cost.
 
+## Settings page
+
+14. Settings > Mods lists FreeTTS with two groups: Quickhacks (Speak
+    quickhacks, Quickhack speech rate) and Dialogue (Speak dialogue
+    choices, Dialogue speech rate). If Mod Configuration Menu is open
+    instead, the same four entries show there.
+    - No FreeTTS entry: the settings system did not attach or Mod
+      Settings is missing. `redscript_r*.log` is the place to look.
+15. Turn "Speak quickhacks" off, apply, open the quickhack list and move
+    through it. Silence, and **no** `speaking` line. Turn it back on:
+    the next highlight change speaks.
+16. Set "Quickhack speech rate" to 8, apply, cycle the list. The log line
+    says `speaking (rate 8):` and the voice is clearly faster. Set it back
+    to 0 afterwards, or leave it where you like it.
+    - The rate is greyed out while its switch is off; that is the
+      dependency working, not a defect.
+
+## Dialogue choices
+
+17. Start a conversation with two or more choices. The log gains one
+    `speaking (rate <n>): <choice>` line when the list appears and the
+    highlighted choice is spoken. A choice shown as `[Leave]` is spoken
+    as "Leave"; a tagged line like `[Corpo] I know the drill` is spoken
+    "Corpo, I know the drill".
+18. Move the highlight to another choice. One new line, the new choice
+    spoken, the previous cut off if still talking.
+19. Move back to the first choice. It is spoken again (a different key,
+    so no dedup).
+20. A greyed-out option (failed attribute check, or already read) is
+    spoken with ", unavailable" on the end.
+21. A timed choice (progress bar under the list) is spoken the moment it
+    appears. Judge whether the Dialogue rate needs to be higher than the
+    quickhack one; that is what the second slider is for.
+22. A single-option prompt (just `[Leave]` or `[Continue]`, nothing to
+    pick between). Open question for this run: the game runs these with
+    no active hub, and the mod treats a lone hub as the target. Record
+    whether it spoke. Silence here is a design gap to fix, not a crash.
+23. Pick a choice. The list closes; nothing more is spoken for it. Open
+    the next choice list in the same conversation: its highlighted choice
+    is spoken, even if the text matches the last one (different hub id).
+24. Turn "Speak dialogue choices" off, apply, open a choice list. Silence
+    and no `speaking` line; quickhacks still speak if their switch is on.
+
 ## Stability
 
-14. Play for a while with the mod on. No crash, no hitch when the list
+25. Play for a while with the mod on. No crash, no hitch when the list
     opens. If the game crashes, run
     `python ..\cp2077-tooling\analyze-crash.py` and look for
     `FreeTTS.dll` frames; the symbols are in `dist/symbols/`.
-15. Quit to desktop cleanly. The game process exits; it does not hang on
+26. Quit to desktop cleanly. The game process exits; it does not hang on
     a worker thread.
 
 ## Result

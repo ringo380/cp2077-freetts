@@ -21,7 +21,8 @@ void Stop();
 bool IsReady();
 
 // Replaces whatever is pending or currently being spoken with aUtf8 (empty
-// text just cancels). Returns IsReady(); a false return means nothing will be
-// spoken.
-bool Say(const std::string& aUtf8);
+// text just cancels), spoken at aRate on SAPI's -10..10 scale (0 is the
+// voice's own speed; out-of-range values are clamped). Returns IsReady(); a
+// false return means nothing will be spoken.
+bool Say(const std::string& aUtf8, int aRate);
 } // namespace freetts::speaker
