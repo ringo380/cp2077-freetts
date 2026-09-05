@@ -1,10 +1,16 @@
 # FreeTTS - in-game acceptance checklist
 
-**0.2.0 (2026-09-04): dialogue choices and a settings page, needs a run.**
-0.1.0 (quickhacks only) was never run in-game, so this run covers both.
-Import `dist/FreeTTS-0.2.0.zip`, confirm the deployed DLL hash matches the
-staged one, then work down the list. Where a step asks for a log line, the
-line is the result; what you heard is extra.
+**0.3.0 (2026-09-04): world map pins and districts, needs a run.** Script
+change plus a version bump in the DLL. Import `dist/FreeTTS-0.3.0.zip`,
+confirm the deployed DLL hash matches the staged one, and that the log
+reports version 0.3.0. **Steps 27-33 are new**; steps 5, 14, and 17 are the
+regression set for this build.
+
+**0.2.0 result (2026-09-04): every step passed** on the first in-game run,
+covering quickhacks, RAM readout, dialogue choices, and the settings page.
+
+Where a step asks for a log line, the line is the result; what you heard is
+extra.
 
 The log is `red4ext/logs/freetts-<date>.log` in the game folder. Lines from
 this mod carry `[FreeTTS]`. A spoken phrase logs as
@@ -113,15 +119,42 @@ this mod carry `[FreeTTS]`. A spoken phrase logs as
 24. Turn "Speak dialogue choices" off, apply, open a choice list. Silence
     and no `speaking` line; quickhacks still speak if their switch is on.
 
+## World map
+
+27. Open the map. Settings > Mods > FreeTTS now has a third group, Map
+    (Speak map, Map speech rate).
+28. Hover the mouse over a fast travel pin. One `speaking (rate <n>):
+    <name>, Fast travel` line (or the point's name alone if the tooltip
+    shows no second line) and the pin is spoken.
+29. Move to a different pin: a job, a shop, a vehicle for sale. Each is
+    spoken as its tooltip title, with the description line after a comma
+    when the tooltip has one. A pin whose tooltip title is a raw key like
+    `UI-MappinTypes-Gig` instead of words is a defect; report the text.
+30. Hover off a pin and back onto the same one. It is spoken again (the
+    hide clears the dedup).
+31. With a gamepad, move the map cursor across pins. Same behaviour as
+    hover: one line and one utterance per pin.
+32. Zoom out until district names show, then drag the cursor across the
+    city. Each district change is spoken as `<district>, <subdistrict>`
+    ("Watson, Kabuki"); staying inside one subdistrict speaks nothing
+    more. Dogtown is spoken as Dogtown. Off the edge of the city, nothing.
+33. Turn "Speak map" off, apply, hover a pin and cross a district. Silence
+    and no `speaking` line; quickhacks and dialogue still speak.
+
 ## Stability
 
-25. Play for a while with the mod on. No crash, no hitch when the list
+34. Play for a while with the mod on. No crash, no hitch when the list
     opens. If the game crashes, run
     `python ..\cp2077-tooling\analyze-crash.py` and look for
     `FreeTTS.dll` frames; the symbols are in `dist/symbols/`.
-26. Quit to desktop cleanly. The game process exits; it does not hang on
+35. Quit to desktop cleanly. The game process exits; it does not hang on
     a worker thread.
 
 ## Result
 
-(Record the date, build, and which steps passed or failed here.)
+**2026-09-04, 0.2.0: reported working across the board** (quickhacks, RAM
+readout on open, dialogue choices, settings page). Note from the run: the
+stock Windows voice copes less well with dialogue wording than with
+quickhack names; a voice or rate change may help, the list itself is right.
+Next feature requested: the world map (highlighted mappins, and districts
+when zoomed out).

@@ -42,6 +42,24 @@ public class FreeTTSSettings extends ScriptableSystem {
   @runtimeProperty("ModSettings.dependency", "dialogueEnabled")
   public let dialogueRate: Int32 = 0;
 
+  @runtimeProperty("ModSettings.mod", "FreeTTS")
+  @runtimeProperty("ModSettings.category", "Map")
+  @runtimeProperty("ModSettings.category.order", "2")
+  @runtimeProperty("ModSettings.displayName", "Speak map")
+  @runtimeProperty("ModSettings.description", "Speak the highlighted map pin, and the district under the cursor when zoomed out.")
+  public let mapEnabled: Bool = true;
+
+  @runtimeProperty("ModSettings.mod", "FreeTTS")
+  @runtimeProperty("ModSettings.category", "Map")
+  @runtimeProperty("ModSettings.category.order", "2")
+  @runtimeProperty("ModSettings.displayName", "Map speech rate")
+  @runtimeProperty("ModSettings.description", "0 is the Windows voice's own speed. Negative is slower, positive is faster.")
+  @runtimeProperty("ModSettings.step", "1")
+  @runtimeProperty("ModSettings.min", "-10")
+  @runtimeProperty("ModSettings.max", "10")
+  @runtimeProperty("ModSettings.dependency", "mapEnabled")
+  public let mapRate: Int32 = 0;
+
   // The live instance; the one Mod Settings writes into. Never `new` this.
   public static func Get(game: GameInstance) -> ref<FreeTTSSettings> {
     return GameInstance.GetScriptableSystemsContainer(game).Get(n"FreeTTS.FreeTTSSettings") as FreeTTSSettings;

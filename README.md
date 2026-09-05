@@ -1,9 +1,10 @@
 # FreeTTS
 
 An accessibility mod for Cyberpunk 2077. It speaks the currently highlighted
-quickhack or dialogue choice aloud, through the Windows text-to-speech
-voice, as you move through the list. No more squinting at the quickhack
-wheel mid-fight, or at a timed dialogue prompt.
+quickhack, dialogue choice, or map pin aloud, through the Windows
+text-to-speech voice, as you move through the list or across the map. No
+more squinting at the quickhack wheel mid-fight, at a timed dialogue
+prompt, or at a tiny map label.
 
 ## Why this exists
 
@@ -30,14 +31,20 @@ item removes the need to read it at all.
   example: "Leave" or "Corpo, I know how these deals work" or "Body, force
   the door, unavailable". Opening the list announces the highlighted
   choice.
-- Quickhacks and dialogue each have their own on/off switch and speech
-  rate, so timed dialogue can be read faster than the quickhack list. See
-  Settings below.
+- On the world map, whenever a pin is highlighted (mouse hover or the
+  gamepad cursor), the mod speaks what its tooltip shows: the title and,
+  when there is one, the description line. For example: "Kabuki Market,
+  Fast travel" or "The Heist, Main job" or "Undiscovered". Zoomed out far
+  enough for district names to appear, moving across the map speaks the
+  district and subdistrict under the cursor: "Watson, Kabuki".
+- Quickhacks, dialogue, and the map each have their own on/off switch and
+  speech rate, so timed dialogue can be read faster than the quickhack
+  list. See Settings below.
 - It uses the voice Windows already has. Nothing is downloaded, nothing
   leaves your machine.
 
-Phone and text-message choices, the radio, and the weapon wheel are not
-spoken yet.
+Phone and text-message choices, the radio, the weapon wheel, and the map's
+filter bar and tracked-quest panel are not spoken yet.
 
 ## Requirements
 
@@ -50,7 +57,7 @@ spoken yet.
 - Windows 10 or 11 with at least one text-to-speech voice installed. Every
   stock install has Microsoft David and Microsoft Zira.
 - Optional: **Mod Settings** (the `mod_settings` RED4ext plugin) for the
-  in-game settings page. Without it everything is on and both rates are 0.
+  in-game settings page. Without it everything is on and every rate is 0.
 
 Cyber Engine Tweaks is not required.
 
@@ -62,6 +69,7 @@ them into your game folder at these paths:
 ```
 red4ext/plugins/FreeTTS/FreeTTS.dll
 r6/scripts/FreeTTS/FreeTTS.reds
+r6/scripts/FreeTTS/FreeTTSMap.reds
 r6/scripts/FreeTTS/FreeTTSSettings.reds
 ```
 
@@ -70,16 +78,17 @@ reads no name or version from a local archive, so type these in the mod
 details pane by hand:
 
 - Name: FreeTTS
-- Version: 0.2.0
+- Version: 0.3.0
 - Author: ringo
 
 ## Settings
 
 With Mod Settings installed, FreeTTS appears under Settings > Mods, and in
-Mod Configuration Menu if you use that. Two groups, two entries each:
+Mod Configuration Menu if you use that. Three groups, two entries each:
 
 - **Quickhacks**: Speak quickhacks (on/off), Quickhack speech rate.
 - **Dialogue**: Speak dialogue choices (on/off), Dialogue speech rate.
+- **Map**: Speak map (on/off), Map speech rate.
 
 A rate runs from -10 (slowest) to 10 (fastest); 0 is the voice's own speed.
 The rate for a group is greyed out while that group is off. Changes apply
