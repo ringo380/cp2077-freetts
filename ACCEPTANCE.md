@@ -1,10 +1,12 @@
 # FreeTTS - in-game acceptance checklist
 
-**0.5.0 (2026-09-05): named voice slots with a spoken preview, needs a
-run.** DLL change (`FreeTTS_VoiceName`) plus the Voice setting as a list.
-Import `dist/FreeTTS-0.5.0.zip`, confirm the deployed DLL hash matches the
-staged one. **Steps 40-42 are new**; steps 5, 17, 28 and 37 are the
-regression set for this build.
+**0.5.0 result (2026-09-05): passed.** The 16:20 log shows the preview
+`speaking (rate 0, voice 4): Voice 4, Microsoft David Desktop` followed by
+`voice set: Microsoft David Desktop ...`, then the same pair for Voice 3
+(Ava), so the field is written before the change callback fires. Voice 3
+was still in use after the 17:43 relaunch. No `not installed` line was
+logged, so step 39's past-the-end slot was not exercised this run.
+Steps 40-42 were new; 5, 17, 28 and 37 were the regression set.
 
 **0.4.0 result (2026-09-05): the voice list and `SetVoice` work.** The
 13:09 log listed nine voices and the setting was in use at 8 (Jenny).
