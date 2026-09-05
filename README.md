@@ -89,8 +89,10 @@ Mod Configuration Menu if you use that. Four groups:
 - **Quickhacks**: Speak quickhacks (on/off), Quickhack speech rate.
 - **Dialogue**: Speak dialogue choices (on/off), Dialogue speech rate.
 - **Map**: Speak map (on/off), Map speech rate.
-- **Voice**: Voice, a number. 0 is the Windows default voice; 1 and up
-  pick one voice for the whole mod, see Voices below.
+- **Voice**: Voice, a list: Windows default, Voice 1, Voice 2, ... up to
+  Voice 12. Voice n is the nth voice in the plugin's startup log, see
+  Voices below. When you apply a change the mod says the chosen voice's
+  name in that voice, so you can pick by ear.
 
 A rate runs from -10 (slowest) to 10 (fastest); 0 is the voice's own speed.
 The rate for a group is greyed out while that group is off. Changes apply
@@ -98,12 +100,14 @@ the next time something is spoken; no restart.
 
 ## Voices
 
-With Voice at 0 the mod speaks with the Windows default text-to-speech
-voice, which is set in the old Speech control panel (run `sapi.cpl`, or
-Control Panel > Speech Recognition > Text to Speech). To use a different
-voice in the game without changing the Windows default, set Voice to that
-voice's number. The plugin lists every voice it can see at startup in
-`red4ext/logs/freetts-<date>.log`, for example:
+With Voice at Windows default the mod speaks with the Windows default
+text-to-speech voice, which is set in the old Speech control panel (run
+`sapi.cpl`, or Control Panel > Speech Recognition > Text to Speech). To use
+a different voice in the game without changing the Windows default, pick
+Voice n, where n is that voice's number in the plugin's startup list. Apply
+and the mod says "Voice n, <name>" in that voice; step through the list
+until you hear the one you want. The plugin lists every voice it can see
+at startup in `red4ext/logs/freetts-<date>.log`, for example:
 
 ```
 voice 1: Microsoft Zira Desktop - English (United States)
@@ -113,9 +117,11 @@ voice 3: Microsoft Mark - English (United States)
 
 The number is that voice's position in the list; the log's order is the
 one that counts, and it can differ from what other programs show. The change applies to
-the next thing spoken; the log then says `voice set: <name>`. A number
-past the end of the list falls back to the Windows default and logs one
-line saying so.
+the next thing spoken; the log then says `voice set: <name>`. A slot
+past the end of the list says "Voice n is not installed", falls back to
+the Windows default and logs one line saying so. Upgrading from 0.4.0
+resets the setting to Windows default once (the stored value was a
+number).
 
 A stock Windows install shows only the two "Desktop" voices, David and
 Zira. Two ways to get more:

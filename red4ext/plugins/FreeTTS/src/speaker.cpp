@@ -30,6 +30,10 @@ struct Request
 };
 
 std::optional<Request> s_pending; // single slot: a new request replaces an unspoken one
+// Display names, filled once by the worker: [0] is the Windows default voice,
+// [n] the nth logged voice. Read by VoiceName from the script thread.
+std::mutex               s_namesMutex;
+std::vector<std::string> s_names;
 bool                        s_stop    = false;
 bool                        s_started = false;
 std::atomic<bool>           s_ready{false};
@@ -167,6 +171,13 @@ void Worker()
         defaultToken = nullptr;
 
     std::vector<ISpObjectToken*> voices = EnumerateVoices();
+    {
+        std::lock_guard namesLock(s_namesMutex);
+        s_names.clear();
+        s_names.push_back(defaultToken ? TokenName(defaultToken) : "");
+        for (ISpObjectToken* t : voices)
+            s_names.push_back(TokenName(t));
+    }
 
     s_ready = true;
     Info("SAPI voice ready");
@@ -297,6 +308,14 @@ void Stop()
 bool IsReady()
 {
     return s_ready.load();
+}
+
+std::string VoiceName(int aVoice)
+{
+    std::lock_guard lock(s_namesMutex);
+    if (aVoice < 0 || aVoice >= static_cast<int>(s_names.size()))
+        return {};
+    return s_names[static_cast<std::size_t>(aVoice)];
 }
 
 bool Say(const std::string& aUtf8, int aRate, int aVoice)

@@ -28,4 +28,9 @@ bool IsReady();
 // past the end falls back to the default). Returns IsReady(); a false return
 // means nothing will be spoken.
 bool Say(const std::string& aUtf8, int aRate, int aVoice);
+
+// The logged display name of voice aVoice (1.. is the position in the voice
+// list, 0 the Windows default voice), or "" when there is no such voice or
+// the list has not been read yet. Safe from any thread.
+std::string VoiceName(int aVoice);
 } // namespace freetts::speaker

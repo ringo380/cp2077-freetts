@@ -11,7 +11,7 @@
 // holds all four facts needed (the hubs, the active hub, the index, whether
 // dialogue is open), so it is the single funnel for the choice list.
 
-import FreeTTS.FreeTTSSettings
+import FreeTTS.*
 
 // Provided by red4ext/plugins/FreeTTS/FreeTTS.dll. rate is SAPI's -10..10;
 // voice is 0 for the Windows default or a number from the plugin's voice list.
@@ -20,9 +20,25 @@ public native func FreeTTS_Speak(text: String, rate: Int32, voice: Int32) -> Boo
 // The voice every list shares; the rates are per list.
 public func FreeTTS_Voice() -> Int32 {
   let settings: ref<FreeTTSSettings> = FreeTTSSettings.Get(GetGameInstance());
-  return IsDefined(settings) ? settings.voice : 0;
+  return IsDefined(settings) ? EnumInt(settings.voice) : 0;
 }
 public native func FreeTTS_IsReady() -> Bool;
+
+// The display name of voice n from the plugin's startup list ("Microsoft
+// Zira Desktop - English (United States)"); 0 is the Windows default voice's
+// name; "" past the end of the list or before the list exists.
+public native func FreeTTS_VoiceName(voice: Int32) -> String;
+
+// What the settings page says when the voice changes: the slot, then the
+// name without its language tail. An unknown slot says so.
+public func FreeTTS_VoicePreview(voice: Int32) -> String {
+  let name: String = FreeTTS_VoiceName(voice);
+  let cut: Int32 = StrFindFirst(name, " - ");
+  if cut > 0 { name = StrLeft(name, cut); };
+  if voice == 0 { return "Windows default" + (StrLen(name) > 0 ? ", " + name : ""); };
+  if StrLen(name) == 0 { return "Voice " + IntToString(voice) + " is not installed"; };
+  return "Voice " + IntToString(voice) + ", " + name;
+}
 
 // ---------------------------------------------------------------------------
 // Quickhacks

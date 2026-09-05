@@ -1,10 +1,13 @@
 # FreeTTS - in-game acceptance checklist
 
-**0.4.0 (2026-09-04): voice picker, needs a run.** DLL change (voice
-enumeration, `SetVoice`) plus a Voice settings group. Import
-`dist/FreeTTS-0.4.0.zip`, confirm the deployed DLL hash matches the staged
-one. **Steps 36-39 are new**; steps 5, 17, and 28 are the regression set
-for this build.
+**0.5.0 (2026-09-05): named voice slots with a spoken preview, needs a
+run.** DLL change (`FreeTTS_VoiceName`) plus the Voice setting as a list.
+Import `dist/FreeTTS-0.5.0.zip`, confirm the deployed DLL hash matches the
+staged one. **Steps 40-42 are new**; steps 5, 17, 28 and 37 are the
+regression set for this build.
+
+**0.4.0 result (2026-09-05): the voice list and `SetVoice` work.** The
+13:09 log listed nine voices and the setting was in use at 8 (Jenny).
 
 **0.3.0 result (2026-09-04): map pins and districts spoke on the first
 run** once the right build was deployed (the first attempt ran with 0.2.0
@@ -168,6 +171,19 @@ below leave `, voice <v>` out for brevity.
 39. Set it to a number past the end of the list (20), apply, speak
     something. One `voice 20 is not installed (n available)` line, the
     default voice speaks, and no further complaint on later phrases.
+    (0.5.0: the setting is a list; use Voice 12 for this step and expect
+    "Voice 12 is not installed" spoken as the preview.)
+40. 0.5.0: the Voice entry is a list, Windows default then Voice 1 to
+    Voice 12, not a number. On first run after upgrading it reads Windows
+    default (the old number is not carried over).
+41. Pick Voice 3, apply. Straight away the mod says "Voice 3, <name>" in
+    that voice, where <name> is the log's `voice 3:` name without the
+    language tail; the log has `speaking (rate 0, voice 3): Voice 3, ...`
+    then `voice set: <name>`. Apply again without changing it: silence.
+    If the preview names the voice you had before instead, Mod Settings
+    fired the change callback before writing the field; report it.
+42. Pick Windows default, apply: "Windows default, <name>" in the default
+    voice.
 
 ## Stability
 
