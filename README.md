@@ -145,8 +145,11 @@ Zira. Two ways to get more:
   installs today (Settings > Accessibility > Narrator > Add natural
   voices) use a newer encryption the adapter cannot open. They show up in
   the list but fail with `EMBEDDED_TTS_ERROR_INVALID_LICENSE` the moment
-  they speak, and the HD voices (Ava HD and friends) exist only in that
-  newer form. The adapter's wiki page "Narrator natural voice download
+  they speak through the adapter's automatic voice list, and the HD
+  voices (Ava HD, Andrew HD, and friends) exist only in that newer form.
+  Two ways round it.
+
+  The simple one: the adapter's wiki page "Narrator natural voice download
   links" points at the older package versions that still work (Aria,
   Guy, Jenny, Ryan, Sonia among them). Download one, check its signature
   is Microsoft's (`Get-AuthenticodeSignature <file>.Msix` in PowerShell,
@@ -157,6 +160,20 @@ Zira. Two ways to get more:
   `HKCU\Software\NaturalVoiceSAPIAdapter\Enumerator`). The adapter's own
   log, `%LOCALAPPDATA%\NaturalVoiceSAPIAdapter\log.txt`, says which voice
   it could not initialize and why.
+
+  The other, for a current Store voice such as Ava HD: the new packages
+  are not encrypted at all; each model file starts with a plaintext
+  license paragraph, and the adapter's engine accepts a voice token that
+  carries that paragraph as a `License` value in place of its built-in
+  key. Copy the package folder out of `C:\Program Files\WindowsApps`, and
+  write a token under `HKLM\SOFTWARE\Microsoft\Speech\Voices\Tokens` with
+  the adapter engine's CLSID, an `Attributes` subkey (Name, Gender, Age,
+  Language, Locale, Vendor), and a `NaturalVoiceConfig` subkey holding
+  `Path` (the copied folder) and `License` (the paragraph, up to "for
+  others to use.", without the 16-character marker after it). The shape
+  of the token is the one the adapter itself writes, visible in its
+  source (`MakeLocalVoiceToken`). Whether using a Narrator voice this way
+  is within its license is a question for you, not for this mod.
 
 Either way, quit and relaunch the game after adding a voice; the list is
 read once at startup.
