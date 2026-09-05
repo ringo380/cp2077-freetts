@@ -134,14 +134,29 @@ Zira. Two ways to get more:
   such as the ones Windows adds when you install another display language
   with its speech pack.
 - **Natural voices (much better).** Windows 11's Narrator has neural
-  voices (Aria, Guy, Jenny, and more) installed from Settings >
-  Accessibility > Narrator > Add natural voices. They are Narrator-only
+  voices (Aria, Guy, Jenny, Sonia, and more). They are Narrator-only
   until a bridge is installed: [NaturalVoiceSAPIAdapter](https://github.com/gexgd0419/NaturalVoiceSAPIAdapter)
   (MIT) registers them as ordinary Windows voices, and the mod then lists
-  them like any other. Install the natural voices first, then run the
-  adapter's installer (x64 is the one the game needs) and untick both
-  online voice options so only local voices are offered. Uninstall from
-  the same installer.
+  them like any other. Run the adapter's installer (x64 is the one the
+  game needs) and untick both online voice options so only local voices
+  are offered. Uninstall from the same installer.
+
+  One catch, as of September 2026: the voice packages the Microsoft Store
+  installs today (Settings > Accessibility > Narrator > Add natural
+  voices) use a newer encryption the adapter cannot open. They show up in
+  the list but fail with `EMBEDDED_TTS_ERROR_INVALID_LICENSE` the moment
+  they speak, and the HD voices (Ava HD and friends) exist only in that
+  newer form. The adapter's wiki page "Narrator natural voice download
+  links" points at the older package versions that still work (Aria,
+  Guy, Jenny, Ryan, Sonia among them). Download one, check its signature
+  is Microsoft's (`Get-AuthenticodeSignature <file>.Msix` in PowerShell,
+  expect `Valid` and `O=Microsoft Corporation`), unzip it (it is a zip)
+  into its own subfolder of a folder you keep, and set that folder as the
+  adapter's "Local voice path" (the installer field, or the registry
+  value `NarratorVoicePath` under
+  `HKCU\Software\NaturalVoiceSAPIAdapter\Enumerator`). The adapter's own
+  log, `%LOCALAPPDATA%\NaturalVoiceSAPIAdapter\log.txt`, says which voice
+  it could not initialize and why.
 
 Either way, quit and relaunch the game after adding a voice; the list is
 read once at startup.
