@@ -22,27 +22,30 @@ void LogError(const char* aMessage)
 }
 } // namespace
 
-// Script side: `public native func FreeTTS_Speak(text: String, rate: Int32) -> Bool;`
-// rate is SAPI's -10..10 scale. Returns false when no voice is available, so
-// the script can log instead of speaking into the void.
+// Script side: `public native func FreeTTS_Speak(text: String, rate: Int32, voice: Int32) -> Bool;`
+// rate is SAPI's -10..10 scale; voice is 0 for the Windows default or a 1-based
+// position in the voice list the plugin logs at start. Returns false when no
+// voice is available, so the script can log instead of speaking into the void.
 void FreeTTS_Speak(RED4ext::IScriptable* aContext, RED4ext::CStackFrame* aFrame, bool* aOut, int64_t a4)
 {
     RED4EXT_UNUSED_PARAMETER(aContext);
     RED4EXT_UNUSED_PARAMETER(a4);
 
     RED4ext::CString text;
-    int32_t          rate = 0;
+    int32_t          rate  = 0;
+    int32_t          voice = 0;
     RED4ext::GetParameter(aFrame, &text);
     RED4ext::GetParameter(aFrame, &rate);
+    RED4ext::GetParameter(aFrame, &voice);
     aFrame->code++; // skip ParamEnd - omitting this corrupts the script VM
 
     const std::string utf8(text.c_str(), text.Length());
-    const bool        ok = freetts::speaker::Say(utf8, rate);
+    const bool        ok = freetts::speaker::Say(utf8, rate, voice);
 
     if (s_sdk)
     {
         if (ok)
-            s_sdk->logger->InfoF(s_handle, "speaking (rate %d): %s", rate, utf8.c_str());
+            s_sdk->logger->InfoF(s_handle, "speaking (rate %d, voice %d): %s", rate, voice, utf8.c_str());
         else
             s_sdk->logger->WarnF(s_handle, "no voice, dropped: %s", utf8.c_str());
     }
@@ -71,6 +74,7 @@ void PostRegisterTypes()
     speak->flags = {.isNative = true, .isStatic = true};
     speak->AddParam("String", "text");
     speak->AddParam("Int32", "rate");
+    speak->AddParam("Int32", "voice");
     speak->SetReturnType("Bool");
     rtti->RegisterFunction(speak);
 
@@ -105,7 +109,7 @@ RED4EXT_C_EXPORT void RED4EXT_CALL Query(RED4ext::v1::PluginInfo* aInfo)
 {
     aInfo->name    = L"FreeTTS";
     aInfo->author  = L"ringo";
-    aInfo->version = RED4EXT_V1_SEMVER(0, 3, 0);
+    aInfo->version = RED4EXT_V1_SEMVER(0, 4, 0);
     aInfo->runtime = RED4EXT_V1_RUNTIME_VERSION_2_31;
     aInfo->sdk     = RED4EXT_V1_SDK_VERSION_CURRENT;
 }

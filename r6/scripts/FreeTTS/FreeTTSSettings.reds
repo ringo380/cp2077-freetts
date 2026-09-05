@@ -60,6 +60,16 @@ public class FreeTTSSettings extends ScriptableSystem {
   @runtimeProperty("ModSettings.dependency", "mapEnabled")
   public let mapRate: Int32 = 0;
 
+  @runtimeProperty("ModSettings.mod", "FreeTTS")
+  @runtimeProperty("ModSettings.category", "Voice")
+  @runtimeProperty("ModSettings.category.order", "3")
+  @runtimeProperty("ModSettings.displayName", "Voice")
+  @runtimeProperty("ModSettings.description", "0 uses the Windows default voice. 1 and up pick a voice by its number in the plugin's log (voice 1, voice 2, ...). Takes effect on the next thing spoken.")
+  @runtimeProperty("ModSettings.step", "1")
+  @runtimeProperty("ModSettings.min", "0")
+  @runtimeProperty("ModSettings.max", "20")
+  public let voice: Int32 = 0;
+
   // The live instance; the one Mod Settings writes into. Never `new` this.
   public static func Get(game: GameInstance) -> ref<FreeTTSSettings> {
     return GameInstance.GetScriptableSystemsContainer(game).Get(n"FreeTTS.FreeTTSSettings") as FreeTTSSettings;

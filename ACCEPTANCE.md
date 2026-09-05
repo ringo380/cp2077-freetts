@@ -1,10 +1,19 @@
 # FreeTTS - in-game acceptance checklist
 
-**0.3.0 (2026-09-04): world map pins and districts, needs a run.** Script
-change plus a version bump in the DLL. Import `dist/FreeTTS-0.3.0.zip`,
-confirm the deployed DLL hash matches the staged one, and that the log
-reports version 0.3.0. **Steps 27-33 are new**; steps 5, 14, and 17 are the
-regression set for this build.
+**0.4.0 (2026-09-04): voice picker, needs a run.** DLL change (voice
+enumeration, `SetVoice`) plus a Voice settings group. Import
+`dist/FreeTTS-0.4.0.zip`, confirm the deployed DLL hash matches the staged
+one. **Steps 36-39 are new**; steps 5, 17, and 28 are the regression set
+for this build.
+
+**0.3.0 result (2026-09-04): map pins and districts spoke on the first
+run** once the right build was deployed (the first attempt ran with 0.2.0
+still deployed, which is why the metro menu talked and the map did not).
+Log observations, not defects: district changes arrive as two events on
+the same frame with one stale half ("City Center, Little China" then
+"Watson, Little China"); the second purges the first, so the right one
+is heard. The grouped fast travel pin reads its whole description
+sentence.
 
 **0.2.0 result (2026-09-04): every step passed** on the first in-game run,
 covering quickhacks, RAM readout, dialogue choices, and the settings page.
@@ -140,6 +149,23 @@ this mod carry `[FreeTTS]`. A spoken phrase logs as
     more. Dogtown is spoken as Dogtown. Off the edge of the city, nothing.
 33. Turn "Speak map" off, apply, hover a pin and cross a district. Silence
     and no `speaking` line; quickhacks and dialogue still speak.
+
+## Voice
+
+36. The log, just before `SAPI voice ready`, has one `voice n: <name>`
+    line per installed voice, in order from 1. The Windows default is
+    among them.
+37. Settings > Mods > FreeTTS has a fourth group, Voice, with one
+    number entry (0 to 20). Set it to a number that is in the log's
+    list and not the default, apply, open the quickhack list. The log
+    line is `speaking (rate 0, voice n):` followed by `voice set: <name>`,
+    and the row is spoken in that voice. Every later phrase, dialogue and
+    map included, uses it.
+38. Set it back to 0, apply, speak something. `voice set:` names the
+    default again and the voice reverts.
+39. Set it to a number past the end of the list (20), apply, speak
+    something. One `voice 20 is not installed (n available)` line, the
+    default voice speaks, and no further complaint on later phrases.
 
 ## Stability
 

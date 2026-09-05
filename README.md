@@ -78,24 +78,72 @@ reads no name or version from a local archive, so type these in the mod
 details pane by hand:
 
 - Name: FreeTTS
-- Version: 0.3.0
+- Version: 0.4.0
 - Author: ringo
 
 ## Settings
 
 With Mod Settings installed, FreeTTS appears under Settings > Mods, and in
-Mod Configuration Menu if you use that. Three groups, two entries each:
+Mod Configuration Menu if you use that. Four groups:
 
 - **Quickhacks**: Speak quickhacks (on/off), Quickhack speech rate.
 - **Dialogue**: Speak dialogue choices (on/off), Dialogue speech rate.
 - **Map**: Speak map (on/off), Map speech rate.
+- **Voice**: Voice, a number. 0 is the Windows default voice; 1 and up
+  pick one voice for the whole mod, see Voices below.
 
 A rate runs from -10 (slowest) to 10 (fastest); 0 is the voice's own speed.
 The rate for a group is greyed out while that group is off. Changes apply
 the next time something is spoken; no restart.
 
-Which voice speaks is whatever Windows is set to. Change it under
-Settings > Time & Language > Speech.
+## Voices
+
+With Voice at 0 the mod speaks with the Windows default text-to-speech
+voice, which is set in the old Speech control panel (run `sapi.cpl`, or
+Control Panel > Speech Recognition > Text to Speech). To use a different
+voice in the game without changing the Windows default, set Voice to that
+voice's number. The plugin lists every voice it can see at startup in
+`red4ext/logs/freetts-<date>.log`:
+
+```
+voice 1: Microsoft Zira Desktop - English (United States)
+voice 2: Microsoft David Desktop - English (United States)
+voice 3: Microsoft Mark - English (United States)
+```
+
+The number is that voice's position in the list. The change applies to
+the next thing spoken; the log then says `voice set: <name>`. A number
+past the end of the list falls back to the Windows default and logs one
+line saying so.
+
+A stock Windows install shows only the two "Desktop" voices, David and
+Zira. Two ways to get more:
+
+- **The hidden Mark voice.** Windows 10 and 11 ship Microsoft Mark (and
+  newer copies of David and Zira) for the newer speech stack, hidden from
+  the older one the mod uses. Copying its registry entry across makes it
+  visible. In an administrator PowerShell:
+
+  ```
+  reg copy HKLM\SOFTWARE\Microsoft\Speech_OneCore\Voices\Tokens\MSTTS_V110_enUS_MarkM HKLM\SOFTWARE\Microsoft\Speech\Voices\Tokens\MSTTS_V110_enUS_MarkM /s /f
+  ```
+
+  To undo it: `reg delete HKLM\SOFTWARE\Microsoft\Speech\Voices\Tokens\MSTTS_V110_enUS_MarkM /f`.
+  The same works for any voice listed under `Speech_OneCore\Voices\Tokens`,
+  such as the ones Windows adds when you install another display language
+  with its speech pack.
+- **Natural voices (much better).** Windows 11's Narrator has neural
+  voices (Aria, Guy, Jenny, and more) installed from Settings >
+  Accessibility > Narrator > Add natural voices. They are Narrator-only
+  until a bridge is installed: [NaturalVoiceSAPIAdapter](https://github.com/gexgd0419/NaturalVoiceSAPIAdapter)
+  (MIT) registers them as ordinary Windows voices, and the mod then lists
+  them like any other. Install the natural voices first, then run the
+  adapter's installer (x64 is the one the game needs) and untick both
+  online voice options so only local voices are offered. Uninstall from
+  the same installer.
+
+Either way, quit and relaunch the game after adding a voice; the list is
+read once at startup.
 
 ## Troubleshooting
 
@@ -112,6 +160,9 @@ Open `red4ext/logs/freetts-<date>.log` in the game folder.
   speech plays through the default output device, not the game's.
 - Neither `speaking` nor any warning when you cycle the list: the script
   did not compile. Look in `r6/logs/redscript_r*.log`.
+- The voice is wrong or ignored: the log's `voice n:` lines are the list
+  the number refers to, and a `voice n is not installed` line means the
+  number is past the end of it.
 - One list is silent and the other is not: check its switch under
   Settings > Mods > FreeTTS.
 - No FreeTTS entry under Settings > Mods: Mod Settings is not installed.

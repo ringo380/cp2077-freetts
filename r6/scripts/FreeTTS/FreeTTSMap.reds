@@ -21,7 +21,7 @@ public func FreeTTS_MapEnabled() -> Bool {
 public func FreeTTS_SpeakMap(phrase: String) -> Void {
   let settings: ref<FreeTTSSettings> = FreeTTSSettings.Get(GetGameInstance());
   let rate: Int32 = IsDefined(settings) ? settings.mapRate : 0;
-  if !FreeTTS_Speak(phrase, rate) {
+  if !FreeTTS_Speak(phrase, rate, FreeTTS_Voice()) {
     FTLogWarning("[FreeTTS] no voice available, not spoken: " + phrase);
   }
 }

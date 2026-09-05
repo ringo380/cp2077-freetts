@@ -10,20 +10,23 @@
 #include <cstdio>
 #include <mutex>
 #include <optional>
+#include <string>
 #include <thread>
+#include <vector>
 
 namespace
 {
 std::mutex                  s_mutex;
 std::condition_variable     s_wake;
 std::thread                 s_thread;
-// One utterance: what to say and how fast. Rate travels with the text so the
-// worker, the only thread that touches the voice, is also the only one that
-// calls SetRate.
+// One utterance: what to say, how fast, and with which voice. Rate and voice
+// travel with the text so the worker, the only thread that touches the voice,
+// is also the only one that calls SetRate and SetVoice.
 struct Request
 {
     std::wstring text;
-    long         rate = 0;
+    long         rate  = 0;
+    int          voice = 0; // 0 = Windows default, 1.. = position in the SAPI voice list
 };
 
 std::optional<Request> s_pending; // single slot: a new request replaces an unspoken one
@@ -67,6 +70,74 @@ std::wstring ToWide(const std::string& aUtf8)
     return wide;
 }
 
+std::string ToUtf8(const wchar_t* aWide)
+{
+    if (!aWide || !*aWide)
+        return {};
+
+    const int length = WideCharToMultiByte(CP_UTF8, 0, aWide, -1, nullptr, 0, nullptr, nullptr);
+    if (length <= 1)
+        return {};
+
+    std::string utf8(static_cast<std::size_t>(length - 1), '\0');
+    WideCharToMultiByte(CP_UTF8, 0, aWide, -1, utf8.data(), length, nullptr, nullptr);
+    return utf8;
+}
+
+// The display name of a voice token ("Microsoft Zira Desktop - English
+// (United States)"), or "?" when the token will not say.
+std::string TokenName(ISpObjectToken* aToken)
+{
+    LPWSTR description = nullptr;
+    if (!aToken || FAILED(aToken->GetStringValue(nullptr, &description)) || !description)
+        return "?";
+    std::string name = ToUtf8(description);
+    CoTaskMemFree(description);
+    return name.empty() ? "?" : name;
+}
+
+// Every installed SAPI voice, in Windows' own order, logged one per line so the
+// settings page's voice number can be matched to a name. The tokens are
+// AddRef'd; the caller releases them.
+std::vector<ISpObjectToken*> EnumerateVoices()
+{
+    std::vector<ISpObjectToken*> voices;
+
+    ISpObjectTokenCategory* category = nullptr;
+    HRESULT hr = CoCreateInstance(CLSID_SpObjectTokenCategory, nullptr, CLSCTX_ALL, IID_ISpObjectTokenCategory,
+                                  reinterpret_cast<void**>(&category));
+    if (FAILED(hr) || !category)
+    {
+        ErrorHr("CoCreateInstance(SpObjectTokenCategory)", hr);
+        return voices;
+    }
+
+    IEnumSpObjectTokens* tokens = nullptr;
+    hr = category->SetId(SPCAT_VOICES, FALSE);
+    if (SUCCEEDED(hr))
+        hr = category->EnumTokens(nullptr, nullptr, &tokens);
+    if (FAILED(hr) || !tokens)
+    {
+        ErrorHr("ISpObjectTokenCategory::EnumTokens", hr);
+        category->Release();
+        return voices;
+    }
+
+    ISpObjectToken* token = nullptr;
+    while (tokens->Next(1, &token, nullptr) == S_OK && token)
+    {
+        voices.push_back(token);
+        char line[320];
+        std::snprintf(line, sizeof(line), "voice %zu: %s", voices.size(), TokenName(token).c_str());
+        Info(line);
+        token = nullptr;
+    }
+
+    tokens->Release();
+    category->Release();
+    return voices;
+}
+
 void Worker()
 {
     // The worker is the only thread that ever touches the voice, so it owns its
@@ -89,10 +160,20 @@ void Worker()
         return;
     }
 
+    // The voice Windows chose is kept so setting 0 can go back to it after a
+    // numbered voice was in use.
+    ISpObjectToken* defaultToken = nullptr;
+    if (FAILED(voice->GetVoice(&defaultToken)))
+        defaultToken = nullptr;
+
+    std::vector<ISpObjectToken*> voices = EnumerateVoices();
+
     s_ready = true;
     Info("SAPI voice ready");
 
-    long currentRate = 0;
+    long currentRate  = 0;
+    int  currentVoice = 0;
+    int  warnedVoice  = 0; // last out-of-range number complained about, so the log gets one line per choice
 
     for (;;)
     {
@@ -104,6 +185,48 @@ void Worker()
                 break;
             request = std::move(s_pending);
             s_pending.reset();
+        }
+
+        // Voice first, since SetVoice can reset the rate on some engines; then
+        // the rate; both apply to the Speak that follows. A number past the end
+        // of the list falls back to the Windows default and is logged once.
+        if (request->voice != currentVoice)
+        {
+            int wanted = request->voice;
+            if (wanted < 0 || wanted > static_cast<int>(voices.size()))
+            {
+                if (wanted != warnedVoice)
+                {
+                    char line[160];
+                    std::snprintf(line, sizeof(line), "voice %d is not installed (%zu available), using the Windows default",
+                                  wanted, voices.size());
+                    Error(line);
+                    warnedVoice = wanted;
+                }
+                wanted = 0;
+            }
+
+            if (wanted != currentVoice)
+            {
+                ISpObjectToken* token   = wanted == 0 ? defaultToken : voices[static_cast<std::size_t>(wanted) - 1];
+                const HRESULT   voiceHr = voice->SetVoice(token);
+                if (FAILED(voiceHr))
+                {
+                    ErrorHr("ISpVoice::SetVoice", voiceHr);
+                }
+                else
+                {
+                    currentVoice = wanted;
+                    currentRate  = 0x7fffffff; // force SetRate below
+                    char line[320];
+                    std::snprintf(line, sizeof(line), "voice set: %s", TokenName(token).c_str());
+                    Info(line);
+                }
+            }
+            else
+            {
+                currentVoice = wanted;
+            }
         }
 
         // SetRate applies to the next Speak, so it goes first. A failure is
@@ -128,6 +251,10 @@ void Worker()
 
     s_ready = false;
     voice->Speak(nullptr, SPF_PURGEBEFORESPEAK, nullptr);
+    for (ISpObjectToken* token : voices)
+        token->Release();
+    if (defaultToken)
+        defaultToken->Release();
     voice->Release();
     CoUninitialize();
 }
@@ -172,14 +299,14 @@ bool IsReady()
     return s_ready.load();
 }
 
-bool Say(const std::string& aUtf8, int aRate)
+bool Say(const std::string& aUtf8, int aRate, int aVoice)
 {
     if (!s_ready.load())
         return false;
 
     {
         std::lock_guard lock(s_mutex);
-        s_pending = Request{ToWide(aUtf8), static_cast<long>(std::clamp(aRate, -10, 10))};
+        s_pending = Request{ToWide(aUtf8), static_cast<long>(std::clamp(aRate, -10, 10)), aVoice};
     }
     s_wake.notify_one();
     return true;

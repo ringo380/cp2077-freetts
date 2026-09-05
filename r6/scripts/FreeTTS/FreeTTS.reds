@@ -13,8 +13,15 @@
 
 import FreeTTS.FreeTTSSettings
 
-// Provided by red4ext/plugins/FreeTTS/FreeTTS.dll. rate is SAPI's -10..10.
-public native func FreeTTS_Speak(text: String, rate: Int32) -> Bool;
+// Provided by red4ext/plugins/FreeTTS/FreeTTS.dll. rate is SAPI's -10..10;
+// voice is 0 for the Windows default or a number from the plugin's voice list.
+public native func FreeTTS_Speak(text: String, rate: Int32, voice: Int32) -> Bool;
+
+// The voice every list shares; the rates are per list.
+public func FreeTTS_Voice() -> Int32 {
+  let settings: ref<FreeTTSSettings> = FreeTTSSettings.Get(GetGameInstance());
+  return IsDefined(settings) ? settings.voice : 0;
+}
 public native func FreeTTS_IsReady() -> Bool;
 
 // ---------------------------------------------------------------------------
@@ -90,7 +97,7 @@ private final func SelectData(data: ref<QuickhackData>) -> Void {
     phrase = FreeTTS_BuildRamPhrase(GetGameInstance(), this.GetPlayerControlledObject()) + ", " + phrase;
   }
   let rate: Int32 = IsDefined(settings) ? settings.quickhackRate : 0;
-  if !FreeTTS_Speak(phrase, rate) {
+  if !FreeTTS_Speak(phrase, rate, FreeTTS_Voice()) {
     FTLogWarning("[FreeTTS] no voice available, not spoken: " + phrase);
   }
 }
@@ -127,7 +134,7 @@ private final func SetVisibility(value: Bool) -> Void {
     + ", " + this.m_freeTtsPendingRow;
   this.m_freeTtsPendingRow = "";
   let rate: Int32 = IsDefined(settings) ? settings.quickhackRate : 0;
-  if !FreeTTS_Speak(phrase, rate) {
+  if !FreeTTS_Speak(phrase, rate, FreeTTS_Voice()) {
     FTLogWarning("[FreeTTS] no voice available, not spoken: " + phrase);
   }
 }
@@ -212,7 +219,7 @@ protected func OnInteractionsChanged() -> Void {
   }
   this.m_freeTtsLastChoiceKey = key;
   let rate: Int32 = IsDefined(settings) ? settings.dialogueRate : 0;
-  if !FreeTTS_Speak(phrase, rate) {
+  if !FreeTTS_Speak(phrase, rate, FreeTTS_Voice()) {
     FTLogWarning("[FreeTTS] no voice available, not spoken: " + phrase);
   }
 }
