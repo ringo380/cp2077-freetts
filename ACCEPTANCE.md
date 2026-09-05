@@ -23,7 +23,9 @@ extra.
 
 The log is `red4ext/logs/freetts-<date>.log` in the game folder. Lines from
 this mod carry `[FreeTTS]`. A spoken phrase logs as
-`speaking (rate <n>): <phrase>`; `<n>` is the rate slider for that list.
+`speaking (rate <n>, voice <v>): <phrase>`; `<n>` is the rate slider for
+that list and `<v>` the Voice setting (0 unless changed). The step quotes
+below leave `, voice <v>` out for brevity.
 
 ## Before launching
 
@@ -158,7 +160,7 @@ this mod carry `[FreeTTS]`. A spoken phrase logs as
 37. Settings > Mods > FreeTTS has a fourth group, Voice, with one
     number entry (0 to 20). Set it to a number that is in the log's
     list and not the default, apply, open the quickhack list. The log
-    line is `speaking (rate 0, voice n):` followed by `voice set: <name>`,
+    line is `speaking (rate 0, voice n):` (full form here) followed by `voice set: <name>`,
     and the row is spoken in that voice. Every later phrase, dialogue and
     map included, uses it.
 38. Set it back to 0, apply, speak something. `voice set:` names the

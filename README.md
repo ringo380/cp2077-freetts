@@ -103,7 +103,7 @@ voice, which is set in the old Speech control panel (run `sapi.cpl`, or
 Control Panel > Speech Recognition > Text to Speech). To use a different
 voice in the game without changing the Windows default, set Voice to that
 voice's number. The plugin lists every voice it can see at startup in
-`red4ext/logs/freetts-<date>.log`:
+`red4ext/logs/freetts-<date>.log`, for example:
 
 ```
 voice 1: Microsoft Zira Desktop - English (United States)
@@ -111,7 +111,8 @@ voice 2: Microsoft David Desktop - English (United States)
 voice 3: Microsoft Mark - English (United States)
 ```
 
-The number is that voice's position in the list. The change applies to
+The number is that voice's position in the list; the log's order is the
+one that counts, and it can differ from what other programs show. The change applies to
 the next thing spoken; the log then says `voice set: <name>`. A number
 past the end of the list falls back to the Windows default and logs one
 line saying so.
@@ -155,7 +156,7 @@ Open `red4ext/logs/freetts-<date>.log` in the game folder.
 - `FreeTTS loaded` but no `SAPI voice ready`: Windows could not create a
   voice. The line after it names the failing call. Confirm a voice exists
   under Settings > Time & Language > Speech.
-- `speaking (rate n): ...` lines appear but you hear nothing: the voice is
+- `speaking (rate n, voice v): ...` lines appear but you hear nothing: the voice is
   working and the game is calling it. Check the Windows volume mixer; the
   speech plays through the default output device, not the game's.
 - Neither `speaking` nor any warning when you cycle the list: the script
