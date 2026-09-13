@@ -9,6 +9,13 @@ module FreeTTS
 // voices are only known at runtime, so the entries are slots: Voice n is the
 // nth line of the plugin's startup voice list. Changing it speaks the
 // slot's real name (OnModSettingsChange below), which is the preview.
+//
+// The slot is only the pick. The plugin remembers the chosen voice by name
+// (FreeTTS_SelectVoice) and every list asks it for the voice to use
+// (FreeTTS_SavedVoice), because Windows renumbers the list whenever a voice
+// is added, removed, or made the default; a stored number would silently
+// become a different voice. After such a change the number shown here is
+// stale until the next pick, but the voice heard is still the one chosen.
 enum FreeTTSVoiceSlot {
   Default = 0,
   Voice1 = 1,
@@ -84,7 +91,7 @@ public class FreeTTSSettings extends ScriptableSystem {
   @runtimeProperty("ModSettings.category", "Voice")
   @runtimeProperty("ModSettings.category.order", "3")
   @runtimeProperty("ModSettings.displayName", "Voice")
-  @runtimeProperty("ModSettings.description", "Which installed voice speaks. Voice n is the nth voice in the plugin's startup log; on apply the mod says the chosen voice's name in that voice.")
+  @runtimeProperty("ModSettings.description", "Which installed voice speaks. Voice n is the nth voice in the plugin's startup log; on apply the mod says the chosen voice's name in that voice and remembers it by name, so the number shown can go stale after Windows adds or removes voices.")
   @runtimeProperty("ModSettings.displayValues.Default", "Windows default")
   @runtimeProperty("ModSettings.displayValues.Voice1", "Voice 1")
   @runtimeProperty("ModSettings.displayValues.Voice2", "Voice 2")
@@ -110,17 +117,26 @@ public class FreeTTSSettings extends ScriptableSystem {
   }
 
   private func OnAttach() -> Void {
-    this.m_previewedVoice = EnumInt(this.voice);
+    // Register first: the class listener writes the stored value into the
+    // field, and the baseline must be that value. Taken before it, the
+    // baseline is the compiled default, and the next apply from any mod
+    // would read the stored number as a change and re-save it, even when
+    // the menu's number is stale after a renumber (ACCEPTANCE 48).
     this.RegisterWithModSettings();
+    this.m_previewedVoice = EnumInt(this.voice);
   }
 
-  // Mod Settings calls this on apply. A changed voice is previewed by
+  // Mod Settings calls this on apply, for any mod's settings. A changed
+  // voice is handed to the plugin to remember by name, then previewed by
   // saying its slot and name in that voice, so a player who cannot read
-  // the list can pick by ear. Rate 0, the voice's own speed.
+  // the list can pick by ear. Rate 0, the voice's own speed. A slot past
+  // the end is not remembered (SelectVoice declines) and the preview says
+  // so; the plugin keeps whatever it had.
   public func OnModSettingsChange() -> Void {
     let n: Int32 = EnumInt(this.voice);
     if n == this.m_previewedVoice { return; };
     this.m_previewedVoice = n;
+    FreeTTS_SelectVoice(n);
     FreeTTS_Speak(FreeTTS_VoicePreview(n), 0, n);
   }
 

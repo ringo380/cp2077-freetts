@@ -8,6 +8,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <cstdio>
+#include <fstream>
 #include <mutex>
 #include <optional>
 #include <string>
@@ -34,6 +35,10 @@ std::optional<Request> s_pending; // single slot: a new request replaces an unsp
 // [n] the nth logged voice. Read by VoiceName from the script thread.
 std::mutex               s_namesMutex;
 std::vector<std::string> s_names;
+// Position in s_names of the voice remembered in voice.txt, resolved once by
+// the worker after the list is read and replaced by SelectVoice. 0 when
+// nothing is remembered or the remembered name is gone.
+std::atomic<int>            s_savedSlot{0};
 bool                        s_stop    = false;
 bool                        s_started = false;
 std::atomic<bool>           s_ready{false};
@@ -86,6 +91,75 @@ std::string ToUtf8(const wchar_t* aWide)
     std::string utf8(static_cast<std::size_t>(length - 1), '\0');
     WideCharToMultiByte(CP_UTF8, 0, aWide, -1, utf8.data(), length, nullptr, nullptr);
     return utf8;
+}
+
+// Where the chosen voice's name is kept: %LOCALAPPDATA%\FreeTTS\voice.txt.
+// Outside the game folder on purpose, so a mod manager swapping versions
+// never sees or removes it. Empty when LOCALAPPDATA is unset.
+std::wstring VoiceFileDir()
+{
+    wchar_t   buffer[MAX_PATH];
+    const DWORD length = GetEnvironmentVariableW(L"LOCALAPPDATA", buffer, MAX_PATH);
+    if (length == 0 || length >= MAX_PATH)
+        return {};
+    return std::wstring(buffer, length) + L"\\FreeTTS";
+}
+
+std::wstring VoiceFilePath()
+{
+    const std::wstring dir = VoiceFileDir();
+    return dir.empty() ? std::wstring{} : dir + L"\\voice.txt";
+}
+
+// The first line of voice.txt, the remembered voice's logged name, or "" when
+// there is no file. UTF-8, trailing CR/LF dropped.
+std::string ReadSavedName()
+{
+    const std::wstring path = VoiceFilePath();
+    if (path.empty())
+        return {};
+
+    std::ifstream file(path, std::ios::binary);
+    if (!file)
+        return {};
+
+    std::string line;
+    std::getline(file, line);
+    while (!line.empty() && (line.back() == '\r' || line.back() == '\n'))
+        line.pop_back();
+    return line;
+}
+
+// Writes aName as the whole of voice.txt, or deletes the file when aName is
+// empty. Logs the failure; the caller's in-memory choice stands regardless.
+bool WriteSavedName(const std::string& aName)
+{
+    const std::wstring path = VoiceFilePath();
+    if (path.empty())
+    {
+        Error("LOCALAPPDATA is not set, the voice choice will not survive a relaunch");
+        return false;
+    }
+
+    if (aName.empty())
+    {
+        if (!DeleteFileW(path.c_str()) && GetLastError() != ERROR_FILE_NOT_FOUND)
+        {
+            Error("could not delete voice.txt, the old voice choice will come back on relaunch");
+            return false;
+        }
+        return true;
+    }
+
+    CreateDirectoryW(VoiceFileDir().c_str(), nullptr); // already existing is fine
+    std::ofstream file(path, std::ios::binary | std::ios::trunc);
+    if (!file)
+    {
+        Error("could not write voice.txt, the voice choice will not survive a relaunch");
+        return false;
+    }
+    file << aName << '\n';
+    return static_cast<bool>(file);
 }
 
 // The display name of a voice token ("Microsoft Zira Desktop - English
@@ -177,6 +251,40 @@ void Worker()
         s_names.push_back(defaultToken ? TokenName(defaultToken) : "");
         for (ISpObjectToken* t : voices)
             s_names.push_back(TokenName(t));
+    }
+
+    // The remembered voice is matched by name, not by position, because
+    // Windows reorders the list whenever a voice is added, removed, or made
+    // the default. Resolved here, before ready, so the first Say sees it.
+    {
+        const std::string saved = ReadSavedName();
+        int               slot  = 0;
+        if (!saved.empty())
+        {
+            std::lock_guard namesLock(s_namesMutex);
+            for (std::size_t i = 1; i < s_names.size(); ++i)
+            {
+                if (s_names[i] == saved)
+                {
+                    slot = static_cast<int>(i);
+                    break;
+                }
+            }
+        }
+        s_savedSlot = slot;
+
+        char line[400];
+        if (saved.empty())
+            std::snprintf(line, sizeof(line), "saved voice: none, using the Windows default");
+        else if (slot == 0)
+            std::snprintf(line, sizeof(line), "saved voice \"%s\" is not installed, using the Windows default",
+                          saved.c_str());
+        else
+            std::snprintf(line, sizeof(line), "saved voice: %s (voice %d)", saved.c_str(), slot);
+        if (slot == 0 && !saved.empty())
+            Error(line);
+        else
+            Info(line);
     }
 
     s_ready = true;
@@ -316,6 +424,32 @@ std::string VoiceName(int aVoice)
     if (aVoice < 0 || aVoice >= static_cast<int>(s_names.size()))
         return {};
     return s_names[static_cast<std::size_t>(aVoice)];
+}
+
+bool SelectVoice(int aVoice)
+{
+    std::string name;
+    {
+        std::lock_guard lock(s_namesMutex);
+        if (aVoice < 0 || aVoice >= static_cast<int>(s_names.size()))
+            return false;
+        if (aVoice > 0)
+            name = s_names[static_cast<std::size_t>(aVoice)];
+    }
+
+    s_savedSlot = aVoice;
+    char line[400];
+    if (aVoice == 0)
+        std::snprintf(line, sizeof(line), "voice choice cleared, using the Windows default");
+    else
+        std::snprintf(line, sizeof(line), "voice choice saved: %s (voice %d)", name.c_str(), aVoice);
+    Info(line);
+    return WriteSavedName(name);
+}
+
+int SavedVoice()
+{
+    return s_savedSlot.load();
 }
 
 bool Say(const std::string& aUtf8, int aRate, int aVoice)

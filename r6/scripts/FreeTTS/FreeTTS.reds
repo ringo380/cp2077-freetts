@@ -17,10 +17,19 @@ import FreeTTS.*
 // voice is 0 for the Windows default or a number from the plugin's voice list.
 public native func FreeTTS_Speak(text: String, rate: Int32, voice: Int32) -> Bool;
 
-// The voice every list shares; the rates are per list.
+// Remembers voice n by its logged name (0 forgets), so the choice survives a
+// relaunch and Windows reordering the list. False when there is no voice n.
+public native func FreeTTS_SelectVoice(voice: Int32) -> Bool;
+
+// The remembered voice's position in this session's list, 0 for the
+// Windows default (nothing remembered, or the remembered voice is gone).
+public native func FreeTTS_SavedVoice() -> Int32;
+
+// The voice every list shares; the rates are per list. The plugin, not the
+// settings field, is the source: the field is a position in a list that
+// Windows reorders, the plugin matched the remembered name at startup.
 public func FreeTTS_Voice() -> Int32 {
-  let settings: ref<FreeTTSSettings> = FreeTTSSettings.Get(GetGameInstance());
-  return IsDefined(settings) ? EnumInt(settings.voice) : 0;
+  return FreeTTS_SavedVoice();
 }
 public native func FreeTTS_IsReady() -> Bool;
 

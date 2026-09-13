@@ -33,4 +33,17 @@ bool Say(const std::string& aUtf8, int aRate, int aVoice);
 // list, 0 the Windows default voice), or "" when there is no such voice or
 // the list has not been read yet. Safe from any thread.
 std::string VoiceName(int aVoice);
+
+// Remembers voice aVoice (1.. is the position in the voice list; 0 forgets)
+// by its logged name in %LOCALAPPDATA%\FreeTTS\voice.txt, so the choice
+// survives Windows reordering the list, and makes it what SavedVoice reports.
+// Returns false when there is no such voice or the list has not been read
+// yet; a file that cannot be written is logged and the choice still holds
+// for this session. Safe from any thread.
+bool SelectVoice(int aVoice);
+
+// The position of the remembered voice in this session's list, or 0 when
+// nothing is remembered, the remembered name is no longer installed, or the
+// list has not been read yet. This is the voice every Say should pass.
+int SavedVoice();
 } // namespace freetts::speaker

@@ -82,6 +82,36 @@ void FreeTTS_VoiceName(RED4ext::IScriptable* aContext, RED4ext::CStackFrame* aFr
         *aOut = RED4ext::CString(freetts::speaker::VoiceName(voice));
 }
 
+// Script side: `public native func FreeTTS_SelectVoice(voice: Int32) -> Bool;`
+// Remembers that voice by name (0 forgets) so it survives a relaunch and
+// Windows reordering the list. False when the list has no such voice.
+void FreeTTS_SelectVoice(RED4ext::IScriptable* aContext, RED4ext::CStackFrame* aFrame, bool* aOut, int64_t a4)
+{
+    RED4EXT_UNUSED_PARAMETER(aContext);
+    RED4EXT_UNUSED_PARAMETER(a4);
+
+    int32_t voice = 0;
+    RED4ext::GetParameter(aFrame, &voice);
+    aFrame->code++; // skip ParamEnd
+
+    const bool ok = freetts::speaker::SelectVoice(voice);
+    if (aOut)
+        *aOut = ok;
+}
+
+// Script side: `public native func FreeTTS_SavedVoice() -> Int32;`
+// The remembered voice's position in this session's list, 0 for the default.
+void FreeTTS_SavedVoice(RED4ext::IScriptable* aContext, RED4ext::CStackFrame* aFrame, int32_t* aOut, int64_t a4)
+{
+    RED4EXT_UNUSED_PARAMETER(aContext);
+    RED4EXT_UNUSED_PARAMETER(a4);
+
+    aFrame->code++; // skip ParamEnd
+
+    if (aOut)
+        *aOut = freetts::speaker::SavedVoice();
+}
+
 void PostRegisterTypes()
 {
     auto* rtti = RED4ext::CRTTISystem::Get();
@@ -104,6 +134,17 @@ void PostRegisterTypes()
     name->AddParam("Int32", "voice");
     name->SetReturnType("String");
     rtti->RegisterFunction(name);
+
+    auto* select = RED4ext::CGlobalFunction::Create("FreeTTS_SelectVoice", "FreeTTS_SelectVoice", &FreeTTS_SelectVoice);
+    select->flags = {.isNative = true, .isStatic = true};
+    select->AddParam("Int32", "voice");
+    select->SetReturnType("Bool");
+    rtti->RegisterFunction(select);
+
+    auto* saved = RED4ext::CGlobalFunction::Create("FreeTTS_SavedVoice", "FreeTTS_SavedVoice", &FreeTTS_SavedVoice);
+    saved->flags = {.isNative = true, .isStatic = true};
+    saved->SetReturnType("Int32");
+    rtti->RegisterFunction(saved);
 }
 
 RED4EXT_C_EXPORT bool RED4EXT_CALL Main(RED4ext::v1::PluginHandle aHandle, RED4ext::v1::EMainReason aReason,
@@ -131,7 +172,7 @@ RED4EXT_C_EXPORT void RED4EXT_CALL Query(RED4ext::v1::PluginInfo* aInfo)
 {
     aInfo->name    = L"FreeTTS";
     aInfo->author  = L"ringo";
-    aInfo->version = RED4EXT_V1_SEMVER(0, 5, 0);
+    aInfo->version = RED4EXT_V1_SEMVER(0, 6, 0);
     aInfo->runtime = RED4EXT_V1_RUNTIME_VERSION_2_31;
     aInfo->sdk     = RED4EXT_V1_SDK_VERSION_CURRENT;
 }

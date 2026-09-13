@@ -92,7 +92,9 @@ Mod Configuration Menu if you use that. Four groups:
 - **Voice**: Voice, a list: Windows default, Voice 1, Voice 2, ... up to
   Voice 12. Voice n is the nth voice in the plugin's startup log, see
   Voices below. When you apply a change the mod says the chosen voice's
-  name in that voice, so you can pick by ear.
+  name in that voice, so you can pick by ear, and remembers the voice by
+  its name, so it stays the same voice even when Windows renumbers the
+  list.
 
 A rate runs from -10 (slowest) to 10 (fastest); 0 is the voice's own speed.
 The rate for a group is greyed out while that group is off. Changes apply
@@ -122,6 +124,19 @@ past the end of the list says "Voice n is not installed", falls back to
 the Windows default and logs one line saying so. Upgrading from 0.4.0
 resets the setting to Windows default once (the stored value was a
 number).
+
+The number is only how you pick. What the mod keeps is the voice's name,
+in `%LOCALAPPDATA%\FreeTTS\voice.txt` (one line, the name as logged), and
+at every launch it finds that name in the fresh list: the log says
+`saved voice: <name> (voice n)`. Windows renumbers the list whenever a
+voice is added, removed, or made the default, so without this a saved
+"Voice 3" would quietly become a different voice; instead the voice stays
+and only the number shown in the menu goes stale. When that happens, the
+entry you see is not the one in use, and choosing it again does nothing
+(no change to apply): step to another entry and back, or pick the voice's
+new number. A remembered voice that has been uninstalled logs
+`saved voice "<name>" is not installed, using the Windows default`. To
+forget the choice, pick Windows default, or delete the file.
 
 A stock Windows install shows only the two "Desktop" voices, David and
 Zira. Two ways to get more:
@@ -201,7 +216,10 @@ Open `red4ext/logs/freetts-<date>.log` in the game folder.
   did not compile. Look in `r6/logs/redscript_r*.log`.
 - The voice is wrong or ignored: the log's `voice n:` lines are the list
   the number refers to, and a `voice n is not installed` line means the
-  number is past the end of it.
+  number is past the end of it. The `saved voice:` line just before
+  `SAPI voice ready` names the voice actually in use; if it differs from
+  the menu's number, Windows has renumbered the list (see Voices) and the
+  voice heard is still the one you chose.
 - One list is silent and the other is not: check its switch under
   Settings > Mods > FreeTTS.
 - No FreeTTS entry under Settings > Mods: Mod Settings is not installed.

@@ -29,8 +29,10 @@ extra.
 The log is `red4ext/logs/freetts-<date>.log` in the game folder. Lines from
 this mod carry `[FreeTTS]`. A spoken phrase logs as
 `speaking (rate <n>, voice <v>): <phrase>`; `<n>` is the rate slider for
-that list and `<v>` the Voice setting (0 unless changed). The step quotes
-below leave `, voice <v>` out for brevity.
+that list and `<v>` the voice in use (0 unless changed; from 0.6.0 the
+position the remembered name resolved to at launch, which can differ from
+the menu's number). The step quotes below leave `, voice <v>` out for
+brevity.
 
 ## Before launching
 
@@ -186,6 +188,45 @@ below leave `, voice <v>` out for brevity.
     fired the change callback before writing the field; report it.
 42. Pick Windows default, apply: "Windows default, <name>" in the default
     voice.
+
+### Remembered by name (0.6.0)
+
+Before 0.6.0 the setting was a bare position, so any change to the
+Windows voice list (a voice added, removed, or made the default) silently
+rebound it to a different voice; on 2026-09-13 a saved Voice 3 went from
+Ava to Mark that way. Now the plugin keeps the chosen voice's logged name
+in `%LOCALAPPDATA%\FreeTTS\voice.txt` and every list asks the plugin,
+not the setting, which voice to use.
+
+43. First launch with no `voice.txt`: the log, just before `SAPI voice
+    ready`, says `saved voice: none, using the Windows default`. The
+    menu still shows whatever number it had; the default voice speaks.
+44. Pick a numbered voice, apply. The log has `voice choice saved:
+    <name> (voice n)` before the preview's `speaking` line, and
+    `voice.txt` now holds that name on one line. Speak something: it uses
+    that voice. Relaunch: the log says `saved voice: <name> (voice n)`
+    and the first phrase spoken is in that voice, with no apply needed.
+45. The renumbering case, simulated. Quit. Edit `voice.txt` to the exact
+    logged name of a voice at a different position (say the `voice 1:`
+    name). Relaunch: the log resolves it, `saved voice: <name> (voice 1)`,
+    and the game speaks in that voice, even though the menu still shows
+    the old number. Choosing that stale number again does nothing (no
+    change); stepping to another entry and back applies and re-saves.
+46. Pick Windows default, apply: `voice choice cleared, using the Windows
+    default`, `voice.txt` is gone, the default speaks. Relaunch: `saved
+    voice: none`.
+47. Missing voice. Quit, put a made-up name in `voice.txt`, relaunch: one
+    `saved voice "<made-up>" is not installed, using the Windows default`
+    line, the default speaks, nothing else complains. Pick a real voice to
+    overwrite the file.
+48. Stale menu, unrelated apply. In the step 45 state (voice.txt names a
+    voice at a position other than the menu's number), change a rate
+    slider only and apply. Expect no `voice choice saved` line, `voice.txt`
+    unchanged, and the next phrase still in the remembered voice. If a
+    `voice choice saved` line for the menu's number does appear, the
+    change callback compared against a baseline taken before Mod Settings
+    wrote the stored value; report it, the fix is to key the callback on
+    `OnModVariableChangeAccepted` with `varName == n"voice"` instead.
 
 ## Stability
 
