@@ -113,6 +113,22 @@ void FreeTTS_SavedVoice(RED4ext::IScriptable* aContext, RED4ext::CStackFrame* aF
         *aOut = freetts::speaker::SavedVoice();
 }
 
+// Script side: `public native func FreeTTS_SetLanguage(code: String) -> Void;`
+// The game's on-screen language setting ("de-de"); the Windows default voice
+// setting then prefers a voice that speaks it.
+void FreeTTS_SetLanguage(RED4ext::IScriptable* aContext, RED4ext::CStackFrame* aFrame, void* aOut, int64_t a4)
+{
+    RED4EXT_UNUSED_PARAMETER(aContext);
+    RED4EXT_UNUSED_PARAMETER(aOut);
+    RED4EXT_UNUSED_PARAMETER(a4);
+
+    RED4ext::CString code;
+    RED4ext::GetParameter(aFrame, &code);
+    aFrame->code++; // skip ParamEnd
+
+    freetts::speaker::SetLanguage(std::string(code.c_str(), code.Length()));
+}
+
 // Script side: `public native func FreeTTS_PlayAt(path: String, x: Float, y: Float, z: Float) -> Int32;`
 // Plays a PCM 16-bit mono WAV from world position (x, y, z), panned and
 // faded against the listener. Handle > 0, or 0 when the audio engine failed.
@@ -214,6 +230,11 @@ void PostRegisterTypes()
     saved->SetReturnType("Int32");
     rtti->RegisterFunction(saved);
 
+    auto* language = RED4ext::CGlobalFunction::Create("FreeTTS_SetLanguage", "FreeTTS_SetLanguage", &FreeTTS_SetLanguage);
+    language->flags = {.isNative = true, .isStatic = true};
+    language->AddParam("String", "code");
+    rtti->RegisterFunction(language);
+
     auto* playAt = RED4ext::CGlobalFunction::Create("FreeTTS_PlayAt", "FreeTTS_PlayAt", &FreeTTS_PlayAt);
     playAt->flags = {.isNative = true, .isStatic = true};
     playAt->AddParam("String", "path");
@@ -269,7 +290,7 @@ RED4EXT_C_EXPORT void RED4EXT_CALL Query(RED4ext::v1::PluginInfo* aInfo)
 {
     aInfo->name    = L"FreeTTS";
     aInfo->author  = L"ringo";
-    aInfo->version = RED4EXT_V1_SEMVER(0, 8, 0);
+    aInfo->version = RED4EXT_V1_SEMVER(0, 9, 0);
     // Not pinned to one game version: FreeTTS only registers script functions
     // through RTTI and hooks no game addresses, like Codeware and Mod Settings.
     aInfo->runtime = RED4EXT_V1_RUNTIME_VERSION_INDEPENDENT;

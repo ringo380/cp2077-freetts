@@ -124,6 +124,9 @@ public class FreeTTSSettings extends ScriptableSystem {
     // the menu's number is stale after a renumber (ACCEPTANCE 48).
     this.RegisterWithModSettings();
     this.m_previewedVoice = EnumInt(this.voice);
+    // Windows default then means a voice for the game's text language, when
+    // one is installed.
+    FreeTTS_SetLanguage(FreeTTS_GameLanguage());
   }
 
   // Mod Settings calls this on apply, for any mod's settings. A changed

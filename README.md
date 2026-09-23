@@ -72,6 +72,7 @@ r6/scripts/FreeTTS/FreeTTS.reds
 r6/scripts/FreeTTS/FreeTTSMap.reds
 r6/scripts/FreeTTS/FreeTTSSettings.reds
 r6/scripts/FreeTTS/FreeTTSSpatial.reds
+r6/scripts/FreeTTS/FreeTTSText.reds
 ```
 
 With Vortex, import the release zip; it already has this layout. Vortex
@@ -79,7 +80,7 @@ reads no name or version from a local archive, so type these in the mod
 details pane by hand:
 
 - Name: FreeTTS
-- Version: 0.8.0
+- Version: 0.9.0
 - Author: ringo
 
 ## Settings
@@ -96,6 +97,15 @@ Mod Configuration Menu if you use that. Four groups:
   name in that voice, so you can pick by ear, and remembers the voice by
   its name, so it stays the same voice even when Windows renumbers the
   list.
+
+FreeTTS follows the game's Text Language setting. With Voice at Windows
+default it speaks with a voice for that language when Windows has one
+installed (the Windows default voice itself when it qualifies), and the
+few words it adds ("locked", "RAM 8 of 12", "unavailable") are in that
+language too. The game's own text is already translated by the game. The
+non-English wording of those added words is best-effort; corrections are
+welcome, and they all live in `r6/scripts/FreeTTS/FreeTTSText.reds`. The
+settings page labels are English.
 
 A rate runs from -10 (slowest) to 10 (fastest); 0 is the voice's own speed.
 The rate for a group is greyed out while that group is off. Changes apply

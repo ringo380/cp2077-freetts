@@ -25,6 +25,11 @@ public native func FreeTTS_SelectVoice(voice: Int32) -> Bool;
 // Windows default (nothing remembered, or the remembered voice is gone).
 public native func FreeTTS_SavedVoice() -> Int32;
 
+// The game's on-screen language code ("de-de", FreeTTS_GameLanguage). From
+// then on the Windows default setting speaks with a voice for that language
+// when one is installed.
+public native func FreeTTS_SetLanguage(code: String) -> Void;
+
 // The voice every list shares; the rates are per list. The plugin, not the
 // settings field, is the source: the field is a position in a list that
 // Windows reorders, the plugin matched the remembered name at startup.
@@ -57,9 +62,9 @@ public func FreeTTS_VoicePreview(voice: Int32) -> String {
   let name: String = FreeTTS_VoiceName(voice);
   let cut: Int32 = StrFindFirst(name, " - ");
   if cut > 0 { name = StrLeft(name, cut); };
-  if voice == 0 { return "Windows default" + (StrLen(name) > 0 ? ", " + name : ""); };
-  if StrLen(name) == 0 { return "Voice " + IntToString(voice) + " is not installed"; };
-  return "Voice " + IntToString(voice) + ", " + name;
+  if voice == 0 { return FreeTTS_Text(FreeTTSTextKey.WindowsDefault) + (StrLen(name) > 0 ? ", " + name : ""); };
+  if StrLen(name) == 0 { return FreeTTS_Text(FreeTTSTextKey.VoiceMissing, IntToString(voice)); };
+  return FreeTTS_Text(FreeTTSTextKey.VoiceN, IntToString(voice)) + ", " + name;
 }
 
 // ---------------------------------------------------------------------------
@@ -90,7 +95,7 @@ public func FreeTTS_BuildRamPhrase(game: GameInstance, player: ref<GameObject>) 
   let id: EntityID = player.GetEntityID();
   let max: Int32 = FloorF(GameInstance.GetStatsSystem(game).GetStatValue(Cast<StatsObjectID>(id), gamedataStatType.Memory));
   let current: Int32 = FloorF(GameInstance.GetStatPoolsSystem(game).GetStatPoolValue(Cast<StatsObjectID>(id), gamedataStatPoolType.Memory, false));
-  return "RAM " + IntToString(current) + " of " + IntToString(max);
+  return FreeTTS_Text(FreeTTSTextKey.RamOf, IntToString(current), IntToString(max));
 }
 
 // "<title>, <cost> RAM[, locked[, <reason>]]". A row that only says there are
@@ -100,9 +105,9 @@ public func FreeTTS_BuildPhrase(data: ref<QuickhackData>) -> String {
   if data.m_noQuickhackData {
     return phrase;
   }
-  phrase += ", " + IntToString(data.m_cost) + " RAM";
+  phrase += ", " + FreeTTS_Text(FreeTTSTextKey.RamCost, IntToString(data.m_cost));
   if data.m_isLocked {
-    phrase += ", locked";
+    phrase += ", " + FreeTTS_Text(FreeTTSTextKey.Locked);
     let reason: String = GetLocalizedText(data.m_inactiveReason);
     if NotEquals(reason, "") {
       phrase += ", " + reason;
@@ -213,7 +218,7 @@ public func FreeTTS_BuildChoicePhrase(choice: ListChoiceData) -> String {
   }
   if ChoiceTypeWrapper.IsType(choice.type, gameinteractionsChoiceType.Inactive)
     || ChoiceTypeWrapper.IsType(choice.type, gameinteractionsChoiceType.CheckFailed) {
-    phrase += ", unavailable";
+    phrase += ", " + FreeTTS_Text(FreeTTSTextKey.Unavailable);
   }
   return phrase;
 }

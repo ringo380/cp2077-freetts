@@ -6,7 +6,9 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cctype>
 #include <condition_variable>
+#include <cwchar>
 #include <cstdio>
 #include <fstream>
 #include <mutex>
@@ -35,6 +37,11 @@ std::optional<Request> s_pending; // single slot: a new request replaces an unsp
 // [n] the nth logged voice. Read by VoiceName from the script thread.
 std::mutex               s_namesMutex;
 std::vector<std::string> s_names;
+// Each voice's language, parallel to s_names (0 when the token does not say).
+std::vector<LANGID> s_langs;
+// The game's on-screen text language, from SetLanguage; 0 until the script
+// sends it or when the code was not recognised.
+std::atomic<LANGID> s_gameLang{0};
 // Position in s_names of the voice remembered in voice.txt, resolved once by
 // the worker after the list is read and replaced by SelectVoice. 0 when
 // nothing is remembered or the remembered name is gone.
@@ -174,6 +181,99 @@ std::string TokenName(ISpObjectToken* aToken)
     return name.empty() ? "?" : name;
 }
 
+// The voice's language from its Attributes\Language value, a hex LANGID such
+// as "409", sometimes followed by ";9" and more. 0 when absent.
+LANGID TokenLanguage(ISpObjectToken* aToken)
+{
+    ISpDataKey* attributes = nullptr;
+    if (!aToken || FAILED(aToken->OpenKey(L"Attributes", &attributes)) || !attributes)
+        return 0;
+
+    LANGID language = 0;
+    LPWSTR value    = nullptr;
+    if (SUCCEEDED(attributes->GetStringValue(L"Language", &value)) && value)
+    {
+        language = static_cast<LANGID>(wcstoul(value, nullptr, 16));
+        CoTaskMemFree(value);
+    }
+    attributes->Release();
+    return language;
+}
+
+// The game's language setting ("de-de", "pt-br", "zh-cn") as a LANGID, 0 when
+// Windows does not know it. The game spells some languages its own way (jp,
+// kr, cz, ua, and ar-ar), so the region is dropped when the pair is unknown.
+LANGID GameLanguageId(std::string aCode)
+{
+    std::transform(aCode.begin(), aCode.end(), aCode.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    const std::size_t dash     = aCode.find('-');
+    std::string       language = aCode.substr(0, dash);
+    const std::string region   = dash == std::string::npos ? std::string{} : aCode.substr(dash + 1);
+
+    static const std::pair<const char*, const char*> kAliases[] = {{"jp", "ja"}, {"kr", "ko"}, {"cz", "cs"}, {"ua", "uk"}};
+    for (const auto& [game, bcp47] : kAliases)
+    {
+        if (language == game)
+            language = bcp47;
+    }
+
+    // An unknown name gives 0 or LOCALE_CUSTOM_UNSPECIFIED (0x1000), not an error.
+    const auto known = [](LCID aLcid) { return aLcid != 0 && aLcid != LOCALE_CUSTOM_UNSPECIFIED; };
+    LCID       lcid  = 0;
+    if (!region.empty())
+        lcid = LocaleNameToLCID(ToWide(language + "-" + region).c_str(), 0);
+    if (!known(lcid))
+        lcid = LocaleNameToLCID(ToWide(language).c_str(), 0);
+    if (!known(lcid))
+        return 0;
+    return LANGIDFROMLCID(lcid);
+}
+
+// Which voice "Windows default" means for the game's language: the default
+// voice when it speaks that exact language, else the first voice that does,
+// else the default when it at least shares the base language (en-GB for
+// en-US), else the first that does, else the default. Caller holds
+// s_namesMutex.
+int LanguageSlot()
+{
+    const LANGID wanted = s_gameLang.load();
+    if (wanted == 0 || s_langs.empty())
+        return 0;
+
+    for (std::size_t i = 0; i < s_langs.size(); ++i)
+    {
+        if (s_langs[i] == wanted)
+            return static_cast<int>(i);
+    }
+    for (std::size_t i = 0; i < s_langs.size(); ++i)
+    {
+        if (s_langs[i] != 0 && PRIMARYLANGID(s_langs[i]) == PRIMARYLANGID(wanted))
+            return static_cast<int>(i);
+    }
+    return 0;
+}
+
+// One log line naming the voice the game's language picked.
+void LogLanguageSlot()
+{
+    char line[400];
+    {
+        std::lock_guard lock(s_namesMutex);
+        if (s_names.empty())
+            return;
+        const int slot = LanguageSlot();
+        if (slot == 0 && (s_langs.empty() || s_langs[0] == 0 ||
+                          PRIMARYLANGID(s_langs[0]) != PRIMARYLANGID(s_gameLang.load())))
+            std::snprintf(line, sizeof(line), "no voice for the game language (%04X), using the Windows default",
+                          static_cast<unsigned>(s_gameLang.load()));
+        else
+            std::snprintf(line, sizeof(line), "game language voice: %s (voice %d)",
+                          s_names[static_cast<std::size_t>(slot)].c_str(), slot);
+    }
+    Info(line);
+}
+
 // Every installed SAPI voice, in Windows' own order, logged one per line so the
 // settings page's voice number can be matched to a name. The tokens are
 // AddRef'd; the caller releases them.
@@ -248,10 +348,17 @@ void Worker()
     {
         std::lock_guard namesLock(s_namesMutex);
         s_names.clear();
+        s_langs.clear();
         s_names.push_back(defaultToken ? TokenName(defaultToken) : "");
+        s_langs.push_back(TokenLanguage(defaultToken));
         for (ISpObjectToken* t : voices)
+        {
             s_names.push_back(TokenName(t));
+            s_langs.push_back(TokenLanguage(t));
+        }
     }
+    if (s_gameLang.load() != 0)
+        LogLanguageSlot(); // the script sent the language before the list was read
 
     // The remembered voice is matched by name, not by position, because
     // Windows reorders the list whenever a voice is added, removed, or made
@@ -309,7 +416,7 @@ void Worker()
         // Voice first, since SetVoice can reset the rate on some engines; then
         // the rate; both apply to the Speak that follows. A number past the end
         // of the list falls back to the Windows default and is logged once.
-        if (request->voice != currentVoice)
+        // "Windows default" means the game language's voice when there is one.
         {
             int wanted = request->voice;
             if (wanted < 0 || wanted > static_cast<int>(voices.size()))
@@ -323,6 +430,11 @@ void Worker()
                     warnedVoice = wanted;
                 }
                 wanted = 0;
+            }
+            if (wanted == 0)
+            {
+                std::lock_guard namesLock(s_namesMutex);
+                wanted = LanguageSlot();
             }
 
             if (wanted != currentVoice)
@@ -423,7 +535,20 @@ std::string VoiceName(int aVoice)
     std::lock_guard lock(s_namesMutex);
     if (aVoice < 0 || aVoice >= static_cast<int>(s_names.size()))
         return {};
-    return s_names[static_cast<std::size_t>(aVoice)];
+    return s_names[static_cast<std::size_t>(aVoice == 0 ? LanguageSlot() : aVoice)];
+}
+
+void SetLanguage(const std::string& aGameCode)
+{
+    const LANGID language = GameLanguageId(aGameCode);
+    if (language == s_gameLang.exchange(language))
+        return;
+
+    char line[160];
+    std::snprintf(line, sizeof(line), "game language: %s (%04X)", aGameCode.c_str(), static_cast<unsigned>(language));
+    Info(line);
+    if (s_ready.load())
+        LogLanguageSlot();
 }
 
 bool SelectVoice(int aVoice)

@@ -30,9 +30,16 @@ bool IsReady();
 bool Say(const std::string& aUtf8, int aRate, int aVoice);
 
 // The logged display name of voice aVoice (1.. is the position in the voice
-// list, 0 the Windows default voice), or "" when there is no such voice or
-// the list has not been read yet. Safe from any thread.
+// list, 0 the voice "Windows default" resolves to), or "" when there is no
+// such voice or the list has not been read yet. Safe from any thread.
 std::string VoiceName(int aVoice);
+
+// The game's on-screen text language as the game spells it ("en-us",
+// "de-de"). From then on voice 0 means the first installed voice for that
+// language (the Windows default voice when it qualifies), falling back to the
+// Windows default when none is installed. A remembered voice is unaffected.
+// Safe from any thread.
+void SetLanguage(const std::string& aGameCode);
 
 // Remembers voice aVoice (1.. is the position in the voice list; 0 forgets)
 // by its logged name in %LOCALAPPDATA%\FreeTTS\voice.txt, so the choice

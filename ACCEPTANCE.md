@@ -237,6 +237,20 @@ not the setting, which voice to use.
     of the change, loading after the next game patch, is proved the day a
     patch lands.
 
+## Game language (0.9.0)
+
+50. English game, voice.txt absent (Voice = Windows default). The log has
+    `game language: en-us (0409)` and `game language voice: Microsoft Ava
+    (Natural HD) ... (voice 0)`. Phrases are word for word what 0.8.0
+    said ("RAM 8 of 12, Overheat, 6 RAM", "locked", "unavailable").
+51. From the main menu set Text Language to German, load a save. Log:
+    `game language: de-de (0407)` then `no voice for the game language
+    (0407), using the Windows default` (no German voice on this box).
+    Quickhack rows say "gesperrt" and "RAM 8 von 12"; dialogue greyed
+    choices end in "nicht verfügbar". Set the language back to English.
+52. With a voice picked (voice.txt present), step 51 changes the words
+    only; the picked voice still speaks.
+
 ## Stability
 
 34. Play for a while with the mod on. No crash, no hitch when the list
