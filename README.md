@@ -68,8 +68,8 @@ Cyber Engine Tweaks is not required.
 
 ## Install
 
-FreeTTS has two parts, a native RED4ext plugin and a redscript file. Copy
-them into your game folder at these paths:
+FreeTTS has two parts, a native RED4ext plugin and its redscript files.
+Copy them into your game folder at these paths:
 
 ```
 red4ext/plugins/FreeTTS/FreeTTS.dll

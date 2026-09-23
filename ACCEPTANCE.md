@@ -182,7 +182,8 @@ brevity.
     default (the old number is not carried over).
 41. Pick Voice 3, apply. Straight away the mod says "Voice 3, <name>" in
     that voice, where <name> is the log's `voice 3:` name without the
-    language tail; the log has `speaking (rate 0, voice 3): Voice 3, ...`
+    language tail; the log has `previewing (voice 3): Voice 3, ...`
+    (`speaking (rate 0, voice 3): ...` before 1.0.0)
     then `voice set: <name>`. Apply again without changing it: silence.
     If the preview names the voice you had before instead, Mod Settings
     fired the change callback before writing the field; report it.
@@ -202,7 +203,7 @@ not the setting, which voice to use.
     ready`, says `saved voice: none, using the Windows default`. The
     menu still shows whatever number it had; the default voice speaks.
 44. Pick a numbered voice, apply. The log has `voice choice saved:
-    <name> (voice n)` before the preview's `speaking` line, and
+    <name> (voice n)` before the preview's `previewing` line, and
     `voice.txt` now holds that name on one line. Speak something: it uses
     that voice. Relaunch: the log says `saved voice: <name> (voice n)`
     and the first phrase spoken is in that voice, with no apply needed.
@@ -230,8 +231,11 @@ not the setting, which voice to use.
 
 ## Not tied to one game version (0.8.0)
 
-49. Launch with 0.8.0. `red4ext/logs/red4ext-<date>.log` lists FreeTTS
-    0.8.0 as loaded (no "incompatible runtime" line for it), and
+Steps 49 to 57 all run against one deploy of 1.0.0; each version's
+section only says which change it checks.
+
+49. Launch. `red4ext/logs/red4ext-<date>.log` lists FreeTTS
+    1.0.0 as loaded (no "incompatible runtime" line for it), and
     `freetts-<date>.log` reaches `SAPI voice ready`. Open a quickhack list:
     it speaks as before. This proves only that 2.31 still works; the point
     of the change, loading after the next game patch, is proved the day a
@@ -243,7 +247,10 @@ not the setting, which voice to use.
     `game language: en-us (0409)` and `game language voice: Microsoft Ava
     (Natural HD) ... (voice 0)`. Phrases are word for word what 0.8.0
     said ("RAM 8 of 12, Overheat, 6 RAM", "locked", "unavailable").
-51. From the main menu set Text Language to German, load a save. Log:
+51. Optional, since it switches the whole game UI to German: the Text
+    Language row keeps its place in the menu, so the same key presses
+    switch it back. From the main menu set Text Language to German, load
+    a save. Log:
     `game language: de-de (0407)` then `no voice for the game language
     (0407), using the Windows default` (no German voice on this box).
     Quickhack rows say "gesperrt" and "RAM 8 von 12"; dialogue greyed
