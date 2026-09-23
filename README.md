@@ -48,11 +48,11 @@ filter bar and tracked-quest panel are not spoken yet.
 
 ## Requirements
 
-- Cyberpunk 2077 **patch 2.31** (game file version `3.0.80.51928`). The
-  plugin declares this exact runtime to RED4ext. On any other game version
-  RED4ext silently refuses to load it: nothing crashes, the mod just does
-  nothing.
-- **RED4ext** matching that game version.
+- Cyberpunk 2077 2.x. Tested on **patch 2.31** (game file version
+  `3.0.80.51928`). The plugin is not tied to one game version, so it keeps
+  loading after a game update; if an update ever changes something it
+  relies on, remove the mod until a fixed version is out.
+- **RED4ext** for your game version.
 - **redscript** (the script compiler that runs at game launch).
 - Windows 10 or 11 with at least one text-to-speech voice installed. Every
   stock install has Microsoft David and Microsoft Zira.
@@ -71,6 +71,7 @@ red4ext/plugins/FreeTTS/FreeTTS.dll
 r6/scripts/FreeTTS/FreeTTS.reds
 r6/scripts/FreeTTS/FreeTTSMap.reds
 r6/scripts/FreeTTS/FreeTTSSettings.reds
+r6/scripts/FreeTTS/FreeTTSSpatial.reds
 ```
 
 With Vortex, import the release zip; it already has this layout. Vortex
@@ -78,7 +79,7 @@ reads no name or version from a local archive, so type these in the mod
 details pane by hand:
 
 - Name: FreeTTS
-- Version: 0.4.0
+- Version: 0.8.0
 - Author: ringo
 
 ## Settings
@@ -204,8 +205,9 @@ read once at startup.
 Open `red4ext/logs/freetts-<date>.log` in the game folder.
 
 - No `freetts-<date>.log` file for this launch at all: the plugin was not
-  loaded. Check the game version against Requirements, and that the DLL is
-  at exactly the path above (one folder deep under `red4ext/plugins`).
+  loaded. Check that RED4ext itself loads (its own `red4ext-<date>.log`),
+  and that the DLL is at exactly the path above (one folder deep under
+  `red4ext/plugins`).
 - `FreeTTS loaded` but no `SAPI voice ready`: Windows could not create a
   voice. The line after it names the failing call. Confirm a voice exists
   under Settings > Time & Language > Speech.

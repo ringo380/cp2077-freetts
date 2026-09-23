@@ -228,6 +228,15 @@ not the setting, which voice to use.
     wrote the stored value; report it, the fix is to key the callback on
     `OnModVariableChangeAccepted` with `varName == n"voice"` instead.
 
+## Not tied to one game version (0.8.0)
+
+49. Launch with 0.8.0. `red4ext/logs/red4ext-<date>.log` lists FreeTTS
+    0.8.0 as loaded (no "incompatible runtime" line for it), and
+    `freetts-<date>.log` reaches `SAPI voice ready`. Open a quickhack list:
+    it speaks as before. This proves only that 2.31 still works; the point
+    of the change, loading after the next game patch, is proved the day a
+    patch lands.
+
 ## Stability
 
 34. Play for a while with the mod on. No crash, no hitch when the list
