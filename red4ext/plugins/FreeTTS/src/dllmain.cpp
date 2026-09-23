@@ -2,6 +2,7 @@
 
 #include <string>
 
+#include "spatial.h"
 #include "speaker.h"
 
 namespace
@@ -112,6 +113,73 @@ void FreeTTS_SavedVoice(RED4ext::IScriptable* aContext, RED4ext::CStackFrame* aF
         *aOut = freetts::speaker::SavedVoice();
 }
 
+// Script side: `public native func FreeTTS_PlayAt(path: String, x: Float, y: Float, z: Float) -> Int32;`
+// Plays a PCM 16-bit mono WAV from world position (x, y, z), panned and
+// faded against the listener. Handle > 0, or 0 when the audio engine failed.
+void FreeTTS_PlayAt(RED4ext::IScriptable* aContext, RED4ext::CStackFrame* aFrame, int32_t* aOut, int64_t a4)
+{
+    RED4EXT_UNUSED_PARAMETER(aContext);
+    RED4EXT_UNUSED_PARAMETER(a4);
+
+    RED4ext::CString path;
+    float            x = 0.0f;
+    float            y = 0.0f;
+    float            z = 0.0f;
+    RED4ext::GetParameter(aFrame, &path);
+    RED4ext::GetParameter(aFrame, &x);
+    RED4ext::GetParameter(aFrame, &y);
+    RED4ext::GetParameter(aFrame, &z);
+    aFrame->code++; // skip ParamEnd
+
+    const int handle = freetts::spatial::PlayAt(std::string(path.c_str(), path.Length()), x, y, z);
+    if (aOut)
+        *aOut = handle;
+}
+
+// Script side: `public native func FreeTTS_SetListener(px: Float, py: Float, pz: Float,
+//   fx: Float, fy: Float, fz: Float, ux: Float, uy: Float, uz: Float) -> Void;`
+void FreeTTS_SetListener(RED4ext::IScriptable* aContext, RED4ext::CStackFrame* aFrame, void* aOut, int64_t a4)
+{
+    RED4EXT_UNUSED_PARAMETER(aContext);
+    RED4EXT_UNUSED_PARAMETER(aOut);
+    RED4EXT_UNUSED_PARAMETER(a4);
+
+    float v[9] = {};
+    for (float& f : v)
+        RED4ext::GetParameter(aFrame, &f);
+    aFrame->code++; // skip ParamEnd
+
+    freetts::spatial::SetListener(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8]);
+}
+
+// Script side: `public native func FreeTTS_IsPlaying(handle: Int32) -> Bool;`
+void FreeTTS_IsPlaying(RED4ext::IScriptable* aContext, RED4ext::CStackFrame* aFrame, bool* aOut, int64_t a4)
+{
+    RED4EXT_UNUSED_PARAMETER(aContext);
+    RED4EXT_UNUSED_PARAMETER(a4);
+
+    int32_t handle = 0;
+    RED4ext::GetParameter(aFrame, &handle);
+    aFrame->code++; // skip ParamEnd
+
+    if (aOut)
+        *aOut = freetts::spatial::IsPlaying(handle);
+}
+
+// Script side: `public native func FreeTTS_StopSound(handle: Int32) -> Void;`
+void FreeTTS_StopSound(RED4ext::IScriptable* aContext, RED4ext::CStackFrame* aFrame, void* aOut, int64_t a4)
+{
+    RED4EXT_UNUSED_PARAMETER(aContext);
+    RED4EXT_UNUSED_PARAMETER(aOut);
+    RED4EXT_UNUSED_PARAMETER(a4);
+
+    int32_t handle = 0;
+    RED4ext::GetParameter(aFrame, &handle);
+    aFrame->code++; // skip ParamEnd
+
+    freetts::spatial::StopSound(handle);
+}
+
 void PostRegisterTypes()
 {
     auto* rtti = RED4ext::CRTTISystem::Get();
@@ -145,6 +213,33 @@ void PostRegisterTypes()
     saved->flags = {.isNative = true, .isStatic = true};
     saved->SetReturnType("Int32");
     rtti->RegisterFunction(saved);
+
+    auto* playAt = RED4ext::CGlobalFunction::Create("FreeTTS_PlayAt", "FreeTTS_PlayAt", &FreeTTS_PlayAt);
+    playAt->flags = {.isNative = true, .isStatic = true};
+    playAt->AddParam("String", "path");
+    playAt->AddParam("Float", "x");
+    playAt->AddParam("Float", "y");
+    playAt->AddParam("Float", "z");
+    playAt->SetReturnType("Int32");
+    rtti->RegisterFunction(playAt);
+
+    auto* listener =
+        RED4ext::CGlobalFunction::Create("FreeTTS_SetListener", "FreeTTS_SetListener", &FreeTTS_SetListener);
+    listener->flags = {.isNative = true, .isStatic = true};
+    for (const char* name : {"px", "py", "pz", "fx", "fy", "fz", "ux", "uy", "uz"})
+        listener->AddParam("Float", name);
+    rtti->RegisterFunction(listener);
+
+    auto* playing = RED4ext::CGlobalFunction::Create("FreeTTS_IsPlaying", "FreeTTS_IsPlaying", &FreeTTS_IsPlaying);
+    playing->flags = {.isNative = true, .isStatic = true};
+    playing->AddParam("Int32", "handle");
+    playing->SetReturnType("Bool");
+    rtti->RegisterFunction(playing);
+
+    auto* stop = RED4ext::CGlobalFunction::Create("FreeTTS_StopSound", "FreeTTS_StopSound", &FreeTTS_StopSound);
+    stop->flags = {.isNative = true, .isStatic = true};
+    stop->AddParam("Int32", "handle");
+    rtti->RegisterFunction(stop);
 }
 
 RED4EXT_C_EXPORT bool RED4EXT_CALL Main(RED4ext::v1::PluginHandle aHandle, RED4ext::v1::EMainReason aReason,
@@ -158,9 +253,11 @@ RED4EXT_C_EXPORT bool RED4EXT_CALL Main(RED4ext::v1::PluginHandle aHandle, RED4e
         aSdk->logger->Info(aHandle, "FreeTTS loaded");
         RED4ext::CRTTISystem::Get()->AddPostRegisterCallback(PostRegisterTypes);
         freetts::speaker::Start(&LogInfo, &LogError);
+        freetts::spatial::Start(&LogInfo, &LogError);
         break;
 
     case RED4ext::v1::EMainReason::Unload:
+        freetts::spatial::Stop();
         freetts::speaker::Stop();
         break;
     }
@@ -172,7 +269,7 @@ RED4EXT_C_EXPORT void RED4EXT_CALL Query(RED4ext::v1::PluginInfo* aInfo)
 {
     aInfo->name    = L"FreeTTS";
     aInfo->author  = L"ringo";
-    aInfo->version = RED4EXT_V1_SEMVER(0, 6, 0);
+    aInfo->version = RED4EXT_V1_SEMVER(0, 7, 0);
     aInfo->runtime = RED4EXT_V1_RUNTIME_VERSION_2_31;
     aInfo->sdk     = RED4EXT_V1_SDK_VERSION_CURRENT;
 }

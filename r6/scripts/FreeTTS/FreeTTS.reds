@@ -38,6 +38,19 @@ public native func FreeTTS_IsReady() -> Bool;
 // name; "" past the end of the list or before the list exists.
 public native func FreeTTS_VoiceName(voice: Int32) -> String;
 
+// Positional playback (0.7.0) for other mods' in-world voices: a PCM 16-bit
+// mono WAV played from a world position (metres, Z up), panned and faded
+// against the listener; full volume within 2 m, silent at 35 m. PlayAt
+// returns a handle > 0, or 0 when the audio engine failed. The listener is
+// the camera: position, forward and up, re-sent while anything plays.
+// Callers check ModuleExists("FreeTTS.Spatial") (FreeTTSSpatial.reds) so an
+// older FreeTTS without these natives is detected at compile time.
+public native func FreeTTS_PlayAt(path: String, x: Float, y: Float, z: Float) -> Int32;
+public native func FreeTTS_SetListener(px: Float, py: Float, pz: Float, fx: Float, fy: Float, fz: Float,
+                                       ux: Float, uy: Float, uz: Float) -> Void;
+public native func FreeTTS_IsPlaying(handle: Int32) -> Bool;
+public native func FreeTTS_StopSound(handle: Int32) -> Void;
+
 // What the settings page says when the voice changes: the slot, then the
 // name without its language tail. An unknown slot says so.
 public func FreeTTS_VoicePreview(voice: Int32) -> String {

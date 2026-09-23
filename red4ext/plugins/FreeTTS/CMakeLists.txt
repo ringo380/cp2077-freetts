@@ -15,10 +15,12 @@ FetchContent_MakeAvailable(RED4ext.SDK)
 add_library(FreeTTS SHARED
   src/dllmain.cpp
   src/speaker.cpp
+  src/spatial.cpp
 )
 
 # ole32 for CoInitializeEx/CoCreateInstance; SAPI itself is header-only COM.
-target_link_libraries(FreeTTS PRIVATE RED4ext::SDK ole32)
+# xaudio2 (XAudio2 2.9 + X3DAudio) ships with Windows 10 and later.
+target_link_libraries(FreeTTS PRIVATE RED4ext::SDK ole32 xaudio2)
 target_compile_definitions(FreeTTS PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX UNICODE _UNICODE)
 
 set_target_properties(FreeTTS PROPERTIES OUTPUT_NAME "FreeTTS" SUFFIX ".dll")
