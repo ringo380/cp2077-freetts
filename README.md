@@ -40,8 +40,10 @@ item removes the need to read it at all.
 - Quickhacks, dialogue, and the map each have their own on/off switch and
   speech rate, so timed dialogue can be read faster than the quickhack
   list. See Settings below.
-- It uses the voice Windows already has. Nothing is downloaded, nothing
-  leaves your machine.
+- It uses the voice Windows already has, or your screen reader: when NVDA
+  is running, the text goes to NVDA instead (your NVDA voice and speed,
+  and your braille display). Nothing is downloaded, nothing leaves your
+  machine.
 
 Phone and text-message choices, the radio, the weapon wheel, and the map's
 filter bar and tracked-quest panel are not spoken yet.
@@ -73,14 +75,20 @@ r6/scripts/FreeTTS/FreeTTSMap.reds
 r6/scripts/FreeTTS/FreeTTSSettings.reds
 r6/scripts/FreeTTS/FreeTTSSpatial.reds
 r6/scripts/FreeTTS/FreeTTSText.reds
+red4ext/plugins/FreeTTS/nvdaControllerClient.dll
+red4ext/plugins/FreeTTS/nvdaControllerClient-LICENSE.txt
 ```
+
+`nvdaControllerClient.dll` is NV Access's own library for talking to NVDA,
+unchanged, under the GNU LGPL 2.1 (the license file beside it). Without it
+FreeTTS still works, just never through NVDA.
 
 With Vortex, import the release zip; it already has this layout. Vortex
 reads no name or version from a local archive, so type these in the mod
 details pane by hand:
 
 - Name: FreeTTS
-- Version: 0.9.0
+- Version: 1.0.0
 - Author: ringo
 
 ## Settings
@@ -96,7 +104,10 @@ Mod Configuration Menu if you use that. Four groups:
   Voices below. When you apply a change the mod says the chosen voice's
   name in that voice, so you can pick by ear, and remembers the voice by
   its name, so it stays the same voice even when Windows renumbers the
-  list.
+  list. The name is always said in the Windows voice, even with NVDA
+  running, since that is the voice being picked. Output: Automatic (NVDA
+  when it is running, otherwise the Windows voice) or Windows voice (never
+  NVDA).
 
 FreeTTS follows the game's Text Language setting. With Voice at Windows
 default it speaks with a voice for that language when Windows has one
@@ -108,8 +119,23 @@ welcome, and they all live in `r6/scripts/FreeTTS/FreeTTSText.reds`. The
 settings page labels are English.
 
 A rate runs from -10 (slowest) to 10 (fastest); 0 is the voice's own speed.
+Rates and Voice apply to the Windows voice only; NVDA uses its own.
 The rate for a group is greyed out while that group is off. Changes apply
 the next time something is spoken; no restart.
+
+## Screen readers
+
+With Output at Automatic (the default, and what you get without Mod
+Settings), FreeTTS checks for NVDA before every phrase. When NVDA is
+running the phrase goes to NVDA, interrupting whatever NVDA was saying, and
+to your braille display if one is connected; the Windows voice stays
+silent, so the two never talk over each other. Start or quit NVDA at any
+time; the next phrase follows. The log says `NVDA is running, speaking
+through it` or `NVDA is not running, speaking through the Windows voice`
+when that changes.
+
+Only NVDA is supported. JAWS, Narrator and other screen readers get the
+Windows voice.
 
 ## Voices
 

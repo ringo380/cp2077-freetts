@@ -45,7 +45,7 @@ brevity.
 
 3. Log has `FreeTTS loaded`, then `SAPI voice ready`. No `HRESULT` line
    between them.
-   - Missing `FreeTTS loaded`: runtime mismatch or wrong depth; nothing else
+   - Missing `FreeTTS loaded`: RED4ext not loading or wrong depth; nothing else
      below can pass.
    - `HRESULT` line: voice creation failed; nothing will be spoken. Stop
      here and report the line.
@@ -250,6 +250,27 @@ not the setting, which voice to use.
     choices end in "nicht verfügbar". Set the language back to English.
 52. With a voice picked (voice.txt present), step 51 changes the words
     only; the picked voice still speaks.
+
+## Screen reader (1.0.0)
+
+Checked outside the game on 2026-09-22: `reader.cpp` in a harness against
+a portable NVDA 2026.2 set to no speech. NVDA absent: nothing sent, the
+Windows voice path is taken. NVDA running: the phrase appears in NVDA's
+log as `Speaking [..., '<phrase>']`. The steps below need NVDA in game.
+
+53. NVDA not running, launch. `freetts-<date>.log` has `NVDA controller
+    client loaded` before `SAPI voice ready`. Quickhacks speak in the
+    Windows voice as before.
+54. Start NVDA (any voice) mid-game, move through a quickhack list. One
+    `NVDA is running, speaking through it` line; each row is spoken once,
+    by NVDA only, and moving quickly cuts the previous row off.
+55. Quit NVDA, move again: one `NVDA is not running, speaking through the
+    Windows voice` line, and the Windows voice is back.
+56. NVDA running, Settings > Mods > FreeTTS, change Voice and apply: the
+    preview ("Voice n, <name>") is in the Windows voice, not NVDA
+    (`previewing (voice n): ...` in the log).
+57. NVDA running, Output = Windows voice, apply: `output: Windows voice
+    only`, rows speak in the Windows voice and NVDA is quiet.
 
 ## Stability
 

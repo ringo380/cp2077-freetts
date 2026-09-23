@@ -55,6 +55,28 @@ void FreeTTS_Speak(RED4ext::IScriptable* aContext, RED4ext::CStackFrame* aFrame,
         *aOut = ok;
 }
 
+// Script side: `public native func FreeTTS_PreviewVoice(text: String, voice: Int32) -> Bool;`
+// FreeTTS_Speak at rate 0 that always uses the Windows voice, never a screen
+// reader: the settings page's "this is what voice n sounds like".
+void FreeTTS_PreviewVoice(RED4ext::IScriptable* aContext, RED4ext::CStackFrame* aFrame, bool* aOut, int64_t a4)
+{
+    RED4EXT_UNUSED_PARAMETER(aContext);
+    RED4EXT_UNUSED_PARAMETER(a4);
+
+    RED4ext::CString text;
+    int32_t          voice = 0;
+    RED4ext::GetParameter(aFrame, &text);
+    RED4ext::GetParameter(aFrame, &voice);
+    aFrame->code++; // skip ParamEnd
+
+    const std::string utf8(text.c_str(), text.Length());
+    const bool        ok = freetts::speaker::Say(utf8, 0, voice, true);
+    if (s_sdk)
+        s_sdk->logger->InfoF(s_handle, "previewing (voice %d): %s", voice, utf8.c_str());
+    if (aOut)
+        *aOut = ok;
+}
+
 // Script side: `public native func FreeTTS_IsReady() -> Bool;`
 void FreeTTS_IsReady(RED4ext::IScriptable* aContext, RED4ext::CStackFrame* aFrame, bool* aOut, int64_t a4)
 {
@@ -127,6 +149,21 @@ void FreeTTS_SetLanguage(RED4ext::IScriptable* aContext, RED4ext::CStackFrame* a
     aFrame->code++; // skip ParamEnd
 
     freetts::speaker::SetLanguage(std::string(code.c_str(), code.Length()));
+}
+
+// Script side: `public native func FreeTTS_SetOutput(output: Int32) -> Void;`
+// 0 sends speech to NVDA when it is running, 1 always uses the Windows voice.
+void FreeTTS_SetOutput(RED4ext::IScriptable* aContext, RED4ext::CStackFrame* aFrame, void* aOut, int64_t a4)
+{
+    RED4EXT_UNUSED_PARAMETER(aContext);
+    RED4EXT_UNUSED_PARAMETER(aOut);
+    RED4EXT_UNUSED_PARAMETER(a4);
+
+    int32_t output = 0;
+    RED4ext::GetParameter(aFrame, &output);
+    aFrame->code++; // skip ParamEnd
+
+    freetts::speaker::SetOutput(output);
 }
 
 // Script side: `public native func FreeTTS_PlayAt(path: String, x: Float, y: Float, z: Float) -> Int32;`
@@ -208,6 +245,13 @@ void PostRegisterTypes()
     speak->SetReturnType("Bool");
     rtti->RegisterFunction(speak);
 
+    auto* preview = RED4ext::CGlobalFunction::Create("FreeTTS_PreviewVoice", "FreeTTS_PreviewVoice", &FreeTTS_PreviewVoice);
+    preview->flags = {.isNative = true, .isStatic = true};
+    preview->AddParam("String", "text");
+    preview->AddParam("Int32", "voice");
+    preview->SetReturnType("Bool");
+    rtti->RegisterFunction(preview);
+
     auto* ready = RED4ext::CGlobalFunction::Create("FreeTTS_IsReady", "FreeTTS_IsReady", &FreeTTS_IsReady);
     ready->flags = {.isNative = true, .isStatic = true};
     ready->SetReturnType("Bool");
@@ -234,6 +278,11 @@ void PostRegisterTypes()
     language->flags = {.isNative = true, .isStatic = true};
     language->AddParam("String", "code");
     rtti->RegisterFunction(language);
+
+    auto* output = RED4ext::CGlobalFunction::Create("FreeTTS_SetOutput", "FreeTTS_SetOutput", &FreeTTS_SetOutput);
+    output->flags = {.isNative = true, .isStatic = true};
+    output->AddParam("Int32", "output");
+    rtti->RegisterFunction(output);
 
     auto* playAt = RED4ext::CGlobalFunction::Create("FreeTTS_PlayAt", "FreeTTS_PlayAt", &FreeTTS_PlayAt);
     playAt->flags = {.isNative = true, .isStatic = true};
@@ -290,7 +339,7 @@ RED4EXT_C_EXPORT void RED4EXT_CALL Query(RED4ext::v1::PluginInfo* aInfo)
 {
     aInfo->name    = L"FreeTTS";
     aInfo->author  = L"ringo";
-    aInfo->version = RED4EXT_V1_SEMVER(0, 9, 0);
+    aInfo->version = RED4EXT_V1_SEMVER(1, 0, 0);
     // Not pinned to one game version: FreeTTS only registers script functions
     // through RTTI and hooks no game addresses, like Codeware and Mod Settings.
     aInfo->runtime = RED4EXT_V1_RUNTIME_VERSION_INDEPENDENT;

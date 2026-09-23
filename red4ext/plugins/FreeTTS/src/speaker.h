@@ -25,9 +25,10 @@ bool IsReady();
 // text just cancels), spoken at aRate on SAPI's -10..10 scale (0 is the
 // voice's own speed; out-of-range values are clamped) by voice aVoice (0 is
 // the Windows default, 1.. is the position in the logged voice list; a number
-// past the end falls back to the default). Returns IsReady(); a false return
-// means nothing will be spoken.
-bool Say(const std::string& aUtf8, int aRate, int aVoice);
+// past the end falls back to the default). Goes to a running screen reader
+// instead unless SetOutput(1) or aWindowsVoice. Returns IsReady(); a false
+// return means nothing will be spoken.
+bool Say(const std::string& aUtf8, int aRate, int aVoice, bool aWindowsVoice = false);
 
 // The logged display name of voice aVoice (1.. is the position in the voice
 // list, 0 the voice "Windows default" resolves to), or "" when there is no
@@ -40,6 +41,11 @@ std::string VoiceName(int aVoice);
 // Windows default when none is installed. A remembered voice is unaffected.
 // Safe from any thread.
 void SetLanguage(const std::string& aGameCode);
+
+// Where Say's text goes. 0 (the default): to NVDA when it is running,
+// otherwise the Windows voice. 1: always the Windows voice. Safe from any
+// thread.
+void SetOutput(int aOutput);
 
 // Remembers voice aVoice (1.. is the position in the voice list; 0 forgets)
 // by its logged name in %LOCALAPPDATA%\FreeTTS\voice.txt, so the choice

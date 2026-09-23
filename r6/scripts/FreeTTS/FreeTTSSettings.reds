@@ -32,6 +32,14 @@ enum FreeTTSVoiceSlot {
   Voice12 = 12,
 }
 
+// Where speech goes. Automatic hands it to NVDA whenever NVDA is running, so
+// a screen reader user hears it in their own reader voice and speed and it
+// does not talk over the reader; otherwise the Windows voice speaks.
+enum FreeTTSOutput {
+  Automatic = 0,
+  WindowsVoice = 1,
+}
+
 public class FreeTTSSettings extends ScriptableSystem {
   @runtimeProperty("ModSettings.mod", "FreeTTS")
   @runtimeProperty("ModSettings.category", "Quickhacks")
@@ -107,6 +115,15 @@ public class FreeTTSSettings extends ScriptableSystem {
   @runtimeProperty("ModSettings.displayValues.Voice12", "Voice 12")
   public let voice: FreeTTSVoiceSlot = FreeTTSVoiceSlot.Default;
 
+  @runtimeProperty("ModSettings.mod", "FreeTTS")
+  @runtimeProperty("ModSettings.category", "Voice")
+  @runtimeProperty("ModSettings.category.order", "3")
+  @runtimeProperty("ModSettings.displayName", "Output")
+  @runtimeProperty("ModSettings.description", "Automatic speaks through NVDA whenever it is running (in your NVDA voice and speed, and on a braille display), otherwise through the Windows voice. Windows voice ignores NVDA.")
+  @runtimeProperty("ModSettings.displayValues.Automatic", "Automatic")
+  @runtimeProperty("ModSettings.displayValues.WindowsVoice", "Windows voice")
+  public let output: FreeTTSOutput = FreeTTSOutput.Automatic;
+
   // The voice number last seen, so the preview speaks only on a change and
   // never at load. Not a setting: no ModSettings properties.
   private let m_previewedVoice: Int32 = 0;
@@ -127,6 +144,7 @@ public class FreeTTSSettings extends ScriptableSystem {
     // Windows default then means a voice for the game's text language, when
     // one is installed.
     FreeTTS_SetLanguage(FreeTTS_GameLanguage());
+    FreeTTS_SetOutput(EnumInt(this.output));
   }
 
   // Mod Settings calls this on apply, for any mod's settings. A changed
@@ -136,11 +154,12 @@ public class FreeTTSSettings extends ScriptableSystem {
   // the end is not remembered (SelectVoice declines) and the preview says
   // so; the plugin keeps whatever it had.
   public func OnModSettingsChange() -> Void {
+    FreeTTS_SetOutput(EnumInt(this.output));
     let n: Int32 = EnumInt(this.voice);
     if n == this.m_previewedVoice { return; };
     this.m_previewedVoice = n;
     FreeTTS_SelectVoice(n);
-    FreeTTS_Speak(FreeTTS_VoicePreview(n), 0, n);
+    FreeTTS_PreviewVoice(FreeTTS_VoicePreview(n), n);
   }
 
   private func OnDetach() -> Void {

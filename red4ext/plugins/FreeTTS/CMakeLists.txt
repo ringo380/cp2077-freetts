@@ -16,6 +16,7 @@ add_library(FreeTTS SHARED
   src/dllmain.cpp
   src/speaker.cpp
   src/spatial.cpp
+  src/reader.cpp
 )
 
 # ole32 for CoInitializeEx/CoCreateInstance; SAPI itself is header-only COM.

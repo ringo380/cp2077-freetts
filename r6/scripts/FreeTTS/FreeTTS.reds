@@ -30,6 +30,14 @@ public native func FreeTTS_SavedVoice() -> Int32;
 // when one is installed.
 public native func FreeTTS_SetLanguage(code: String) -> Void;
 
+// Where speech goes: 0 to NVDA whenever it is running, else the Windows
+// voice; 1 always the Windows voice (FreeTTSOutput).
+public native func FreeTTS_SetOutput(output: Int32) -> Void;
+
+// Says text at rate 0 in Windows voice n (0 the default), never through a
+// screen reader: the settings page's voice preview.
+public native func FreeTTS_PreviewVoice(text: String, voice: Int32) -> Bool;
+
 // The voice every list shares; the rates are per list. The plugin, not the
 // settings field, is the source: the field is a position in a list that
 // Windows reorders, the plugin matched the remembered name at startup.

@@ -1,5 +1,7 @@
 #include "speaker.h"
 
+#include "reader.h"
+
 #include <Windows.h>
 #include <objbase.h>
 #include <sapi.h>
@@ -30,6 +32,7 @@ struct Request
     std::wstring text;
     long         rate  = 0;
     int          voice = 0; // 0 = Windows default, 1.. = position in the SAPI voice list
+    bool         windowsVoice = false; // skip the screen reader (voice previews)
 };
 
 std::optional<Request> s_pending; // single slot: a new request replaces an unspoken one
@@ -42,6 +45,9 @@ std::vector<LANGID> s_langs;
 // The game's on-screen text language, from SetLanguage; 0 until the script
 // sends it or when the code was not recognised.
 std::atomic<LANGID> s_gameLang{0};
+// 0: a running screen reader speaks, else the Windows voice. 1: always the
+// Windows voice. From SetOutput.
+std::atomic<int> s_output{0};
 // Position in s_names of the voice remembered in voice.txt, resolved once by
 // the worker after the list is read and replaced by SelectVoice. 0 when
 // nothing is remembered or the remembered name is gone.
@@ -394,6 +400,8 @@ void Worker()
             Info(line);
     }
 
+    freetts::reader::Load(s_info, s_error);
+
     s_ready = true;
     Info("SAPI voice ready");
 
@@ -411,6 +419,15 @@ void Worker()
                 break;
             request = std::move(s_pending);
             s_pending.reset();
+        }
+
+        // A running screen reader takes the text instead, in the player's own
+        // reader voice and speed; the Windows voice is silenced so the two
+        // never talk over each other.
+        if (s_output.load() == 0 && !request->windowsVoice && freetts::reader::Speak(request->text))
+        {
+            voice->Speak(nullptr, SPF_ASYNC | SPF_PURGEBEFORESPEAK, nullptr);
+            continue;
         }
 
         // Voice first, since SetVoice can reset the rate on some engines; then
@@ -481,6 +498,7 @@ void Worker()
     }
 
     s_ready = false;
+    freetts::reader::Unload();
     voice->Speak(nullptr, SPF_PURGEBEFORESPEAK, nullptr);
     for (ISpObjectToken* token : voices)
         token->Release();
@@ -538,6 +556,14 @@ std::string VoiceName(int aVoice)
     return s_names[static_cast<std::size_t>(aVoice == 0 ? LanguageSlot() : aVoice)];
 }
 
+void SetOutput(int aOutput)
+{
+    const int output = aOutput == 1 ? 1 : 0;
+    if (output == s_output.exchange(output))
+        return;
+    Info(output == 1 ? "output: Windows voice only" : "output: screen reader when running, else the Windows voice");
+}
+
 void SetLanguage(const std::string& aGameCode)
 {
     const LANGID language = GameLanguageId(aGameCode);
@@ -577,14 +603,14 @@ int SavedVoice()
     return s_savedSlot.load();
 }
 
-bool Say(const std::string& aUtf8, int aRate, int aVoice)
+bool Say(const std::string& aUtf8, int aRate, int aVoice, bool aWindowsVoice)
 {
     if (!s_ready.load())
         return false;
 
     {
         std::lock_guard lock(s_mutex);
-        s_pending = Request{ToWide(aUtf8), static_cast<long>(std::clamp(aRate, -10, 10)), aVoice};
+        s_pending = Request{ToWide(aUtf8), static_cast<long>(std::clamp(aRate, -10, 10)), aVoice, aWindowsVoice};
     }
     s_wake.notify_one();
     return true;
