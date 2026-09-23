@@ -57,7 +57,10 @@ filter bar and tracked-quest panel are not spoken yet.
 - **RED4ext** for your game version.
 - **redscript** (the script compiler that runs at game launch).
 - Windows 10 or 11 with at least one text-to-speech voice installed. Every
-  stock install has Microsoft David and Microsoft Zira.
+  stock install has Microsoft David and Microsoft Zira. Linux and Steam
+  Deck (Proton) are untested; Windows speech may be missing there, in
+  which case the log says so and nothing is spoken.
+- Optional: **NVDA**, if you use a screen reader. See Screen readers.
 - Optional: **Mod Settings** (the `mod_settings` RED4ext plugin) for the
   in-game settings page. Without it everything is on and every rate is 0.
 
@@ -141,12 +144,14 @@ Windows voice.
 
 With Voice at Windows default the mod speaks with the Windows default
 text-to-speech voice, which is set in the old Speech control panel (run
-`sapi.cpl`, or Control Panel > Speech Recognition > Text to Speech). To use
-a different voice in the game without changing the Windows default, pick
-Voice n, where n is that voice's number in the plugin's startup list. Apply
-and the mod says "Voice n, <name>" in that voice; step through the list
-until you hear the one you want. The plugin lists every voice it can see
-at startup in `red4ext/logs/freetts-<date>.log`, for example:
+`sapi.cpl`, or Control Panel > Speech Recognition > Text to Speech), or,
+when the game's text language differs from that voice's, with the first
+installed voice for the game's language. To use a different voice in the
+game without changing the Windows default, pick Voice n, where n is that
+voice's number in the plugin's startup list. Apply and the mod says
+"Voice n, <name>" in that voice; step through the list until you hear the
+one you want. The plugin lists every voice it can see at startup in
+`red4ext/logs/freetts-<date>.log`, for example:
 
 ```
 voice 1: Microsoft Zira Desktop - English (United States)
@@ -155,86 +160,46 @@ voice 3: Microsoft Mark - English (United States)
 ```
 
 The number is that voice's position in the list; the log's order is the
-one that counts, and it can differ from what other programs show. The change applies to
-the next thing spoken; the log then says `voice set: <name>`. A slot
-past the end of the list says "Voice n is not installed", falls back to
-the Windows default and logs one line saying so. Upgrading from 0.4.0
-resets the setting to Windows default once (the stored value was a
-number).
+one that counts, and it can differ from what other programs show. A slot
+past the end of the list says "Voice n is not installed" and falls back
+to the Windows default.
 
 The number is only how you pick. What the mod keeps is the voice's name,
-in `%LOCALAPPDATA%\FreeTTS\voice.txt` (one line, the name as logged), and
-at every launch it finds that name in the fresh list: the log says
-`saved voice: <name> (voice n)`. Windows renumbers the list whenever a
-voice is added, removed, or made the default, so without this a saved
-"Voice 3" would quietly become a different voice; instead the voice stays
-and only the number shown in the menu goes stale. When that happens, the
-entry you see is not the one in use, and choosing it again does nothing
-(no change to apply): step to another entry and back, or pick the voice's
-new number. A remembered voice that has been uninstalled logs
-`saved voice "<name>" is not installed, using the Windows default`. To
-forget the choice, pick Windows default, or delete the file.
+in `%LOCALAPPDATA%\FreeTTS\voice.txt`, and at every launch it finds that
+name in the fresh list: the log says `saved voice: <name> (voice n)`.
+Windows renumbers the list whenever a voice is added, removed, or made the
+default, so the voice you picked stays and only the number shown in the
+menu can go stale. When that happens, choosing the shown entry again does
+nothing (no change to apply): step to another entry and back. To forget
+the choice, pick Windows default, or delete the file.
 
-A stock Windows install shows only the two "Desktop" voices, David and
-Zira. Two ways to get more:
+A stock English Windows shows only the two "Desktop" voices, David and
+Zira; other Windows display languages come with a voice for their own
+language. Ways to get more:
 
-- **The hidden Mark voice.** Windows 10 and 11 ship Microsoft Mark (and
-  newer copies of David and Zira) for the newer speech stack, hidden from
-  the older one the mod uses. Copying its registry entry across makes it
-  visible. In an administrator PowerShell:
+- **Voices Windows already has but hides.** Windows 10 and 11 ship more
+  voices for the newer speech stack (Microsoft Mark, and the voices
+  added when you install a language's speech pack under Settings > Time
+  & language > Speech), hidden from the older one the mod uses. Copying a
+  voice's registry entry across makes it visible. In an administrator
+  PowerShell, for Mark:
 
   ```
   reg copy HKLM\SOFTWARE\Microsoft\Speech_OneCore\Voices\Tokens\MSTTS_V110_enUS_MarkM HKLM\SOFTWARE\Microsoft\Speech\Voices\Tokens\MSTTS_V110_enUS_MarkM /s /f
   ```
 
   To undo it: `reg delete HKLM\SOFTWARE\Microsoft\Speech\Voices\Tokens\MSTTS_V110_enUS_MarkM /f`.
-  The same works for any voice listed under `Speech_OneCore\Voices\Tokens`,
-  such as the ones Windows adds when you install another display language
-  with its speech pack.
+  The same works for any voice listed under `Speech_OneCore\Voices\Tokens`.
 - **Natural voices (much better).** Windows 11's Narrator has neural
-  voices (Aria, Guy, Jenny, Sonia, and more). They are Narrator-only
-  until a bridge is installed: [NaturalVoiceSAPIAdapter](https://github.com/gexgd0419/NaturalVoiceSAPIAdapter)
-  (MIT) registers them as ordinary Windows voices, and the mod then lists
-  them like any other. Run the adapter's installer (x64 is the one the
-  game needs) and untick both online voice options so only local voices
-  are offered. Uninstall from the same installer.
+  voices (Aria, Guy, Jenny, Sonia, and more). A free bridge,
+  [NaturalVoiceSAPIAdapter](https://github.com/gexgd0419/NaturalVoiceSAPIAdapter),
+  registers them as ordinary Windows voices, and the mod then lists them
+  like any other. Install the x64 build (the one the game needs) and
+  follow its own documentation; its wiki explains which Narrator voice
+  packages it can open.
 
-  One catch, as of September 2026: the voice packages the Microsoft Store
-  installs today (Settings > Accessibility > Narrator > Add natural
-  voices) use a newer encryption the adapter cannot open. They show up in
-  the list but fail with `EMBEDDED_TTS_ERROR_INVALID_LICENSE` the moment
-  they speak through the adapter's automatic voice list, and the HD
-  voices (Ava HD, Andrew HD, and friends) exist only in that newer form.
-  Two ways round it.
-
-  The simple one: the adapter's wiki page "Narrator natural voice download
-  links" points at the older package versions that still work (Aria,
-  Guy, Jenny, Ryan, Sonia among them). Download one, check its signature
-  is Microsoft's (`Get-AuthenticodeSignature <file>.Msix` in PowerShell,
-  expect `Valid` and `O=Microsoft Corporation`), unzip it (it is a zip)
-  into its own subfolder of a folder you keep, and set that folder as the
-  adapter's "Local voice path" (the installer field, or the registry
-  value `NarratorVoicePath` under
-  `HKCU\Software\NaturalVoiceSAPIAdapter\Enumerator`). The adapter's own
-  log, `%LOCALAPPDATA%\NaturalVoiceSAPIAdapter\log.txt`, says which voice
-  it could not initialize and why.
-
-  The other, for a current Store voice such as Ava HD: the new packages
-  are not encrypted at all; each model file starts with a plaintext
-  license paragraph, and the adapter's engine accepts a voice token that
-  carries that paragraph as a `License` value in place of its built-in
-  key. Copy the package folder out of `C:\Program Files\WindowsApps`, and
-  write a token under `HKLM\SOFTWARE\Microsoft\Speech\Voices\Tokens` with
-  the adapter engine's CLSID, an `Attributes` subkey (Name, Gender, Age,
-  Language, Locale, Vendor), and a `NaturalVoiceConfig` subkey holding
-  `Path` (the copied folder) and `License` (the paragraph, up to "for
-  others to use.", without the 16-character marker after it). The shape
-  of the token is the one the adapter itself writes, visible in its
-  source (`MakeLocalVoiceToken`). Whether using a Narrator voice this way
-  is within its license is a question for you, not for this mod.
-
-Either way, quit and relaunch the game after adding a voice; the list is
-read once at startup.
+Quit and relaunch the game after adding a voice; the list is read once at
+startup.
 
 ## Troubleshooting
 
