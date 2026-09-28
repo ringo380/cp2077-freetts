@@ -164,7 +164,7 @@ brevity.
 36. The log, just before `SAPI voice ready`, has one `voice n: <name>`
     line per installed voice, in order from 1. The Windows default is
     among them.
-37. Settings > Mods > FreeTTS has a fourth group, Voice, with one
+37. Settings > Mods > FreeTTS has a Voice group with one
     number entry (0 to 20). Set it to a number that is in the log's
     list and not the default, apply, open the quickhack list. The log
     line is `speaking (rate 0, voice n):` (full form here) followed by `voice set: <name>`,
@@ -278,6 +278,42 @@ log as `Speaking [..., '<phrase>']`. The steps below need NVDA in game.
     (`previewing (voice n): ...` in the log).
 57. NVDA running, Output = Windows voice, apply: `output: Windows voice
     only`, rows speak in the Windows voice and NVDA is quiet.
+
+## Shards (1.1.0)
+
+Output = Windows voice for these steps, so the stop is audible. Settings
+defaults: Read shards on, rate 0, Keep reading after closing off. A stop
+logs as `speaking (rate 0): ` with nothing after the colon.
+
+58. Settings > Mods > FreeTTS has a Shards group (Read shards, Shard speech
+    rate, Keep reading after closing) between Map and Voice. The rate and
+    Keep reading are greyed out while Read shards is off.
+59. Pick up an unread shard and choose Read on the "shard collected"
+    notification. The popup opens and the log shows
+    `speaking (rate 0): <title>. <text>`, starting with the same title and
+    text the popup shows (a very long shard may be cut short in the log,
+    not in the speech); the reading starts.
+60. Close the popup (Esc or the close button) mid-reading. The reading
+    stops at once and the stop line is logged.
+61. Turn Keep reading after closing on, apply, pick up (or read from the
+    inventory) another shard, close it mid-reading. It keeps reading while
+    you walk around; no stop line. Open the quickhack list: the row cuts
+    the shard off. Turn Keep reading back off.
+62. Pick up an encrypted shard. Only the title is spoken, ending in the
+    game's "(Encrypted)"; no hex digits are read. Cracking it from the
+    popup closes it with a stop line.
+63. Journal > Shards. Each highlighted row speaks its title; a group row
+    speaks its title and count (`<group>, <n>`). Opening a folded group
+    does not repeat its title.
+64. Open a shard you have not read yet. One `<title>. <text>` line, not
+    two, even though opening it marks it read (the menu opens the row a
+    second time).
+65. Open the same shard again without moving: nothing new is spoken. Move
+    one row away and back, open it: it is read again.
+66. Mid-reading, leave the journal (Esc). The stop line is logged.
+67. Set Shard speech rate to 5, apply, open a shard: `speaking (rate 5)`.
+    Read shards off, apply: highlighting rows and opening shards speak
+    nothing, and closing a shard logs no stop line.
 
 ## Stability
 

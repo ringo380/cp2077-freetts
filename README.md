@@ -2,9 +2,9 @@
 
 An accessibility mod for Cyberpunk 2077. It speaks the currently highlighted
 quickhack, dialogue choice, or map pin aloud, through the Windows
-text-to-speech voice, as you move through the list or across the map. No
-more squinting at the quickhack wheel mid-fight, at a timed dialogue
-prompt, or at a tiny map label.
+text-to-speech voice, as you move through the list or across the map, and
+reads shards to you. No more squinting at the quickhack wheel mid-fight, at
+a timed dialogue prompt, at a tiny map label, or at a wall of shard text.
 
 ## Why this exists
 
@@ -37,9 +37,17 @@ item removes the need to read it at all.
   Fast travel" or "The Heist, Main job" or "Undiscovered". Zoomed out far
   enough for district names to appear, moving across the map speaks the
   district and subdistrict under the cursor: "Watson, Kabuki".
-- Quickhacks, dialogue, and the map each have their own on/off switch and
-  speech rate, so timed dialogue can be read faster than the quickhack
-  list. See Settings below.
+- Shards are read aloud: the title, then the whole text, when you read a
+  shard you just picked up (or read one from your inventory), and when you
+  open one in Journal > Shards.
+  Moving through the Shards list speaks each title (and for a group, how
+  many shards are in it). An encrypted shard reads its title only, since
+  its text is scrambled until you crack it. Closing the shard stops the
+  reading, unless you turn on Keep reading after closing, which lets you
+  go on playing while you listen.
+- Quickhacks, dialogue, the map, and shards each have their own on/off
+  switch and speech rate, so timed dialogue can be read faster than the
+  quickhack list. See Settings below.
 - It uses the voice Windows already has, or your screen reader: when NVDA
   is running, the text goes to NVDA instead (your NVDA voice and speed,
   and your braille display). Nothing is downloaded, nothing leaves your
@@ -76,6 +84,7 @@ red4ext/plugins/FreeTTS/FreeTTS.dll
 r6/scripts/FreeTTS/FreeTTS.reds
 r6/scripts/FreeTTS/FreeTTSMap.reds
 r6/scripts/FreeTTS/FreeTTSSettings.reds
+r6/scripts/FreeTTS/FreeTTSShards.reds
 r6/scripts/FreeTTS/FreeTTSSpatial.reds
 r6/scripts/FreeTTS/FreeTTSText.reds
 red4ext/plugins/FreeTTS/nvdaControllerClient.dll
@@ -91,17 +100,21 @@ reads no name or version from a local archive, so type these in the mod
 details pane by hand:
 
 - Name: FreeTTS
-- Version: 1.0.0
+- Version: 1.1.0
 - Author: ringo
 
 ## Settings
 
 With Mod Settings installed, FreeTTS appears under Settings > Mods, and in
-Mod Configuration Menu if you use that. Four groups:
+Mod Configuration Menu if you use that. Five groups:
 
 - **Quickhacks**: Speak quickhacks (on/off), Quickhack speech rate.
 - **Dialogue**: Speak dialogue choices (on/off), Dialogue speech rate.
 - **Map**: Speak map (on/off), Map speech rate.
+- **Shards**: Read shards (on/off), Shard speech rate, Keep reading after
+  closing (off by default). With it on, the reading goes on after you
+  close the shard, until something else is spoken: a quickhack, a dialogue
+  choice, a map pin, or another shard.
 - **Voice**: Voice, a list: Windows default, Voice 1, Voice 2, ... up to
   Voice 12. Voice n is the nth voice in the plugin's startup log, see
   Voices below. When you apply a change the mod says the chosen voice's

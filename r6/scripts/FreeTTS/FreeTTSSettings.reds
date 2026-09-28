@@ -2,7 +2,8 @@
 // Menu, which bridges Mod Settings) when the Mod Settings plugin is
 // installed. Without it the defaults below apply: everything on, rate 0.
 //
-// Rate is per list on purpose: dialogue choices are timed, quickhacks are not.
+// Rate is per list on purpose: dialogue choices are timed, quickhacks are not,
+// and a shard is a long read.
 module FreeTTS
 
 // The Voice selector. Mod Settings can only show fixed names, and Windows
@@ -96,8 +97,34 @@ public class FreeTTSSettings extends ScriptableSystem {
   public let mapRate: Int32 = 0;
 
   @runtimeProperty("ModSettings.mod", "FreeTTS")
-  @runtimeProperty("ModSettings.category", "Voice")
+  @runtimeProperty("ModSettings.category", "Shards")
   @runtimeProperty("ModSettings.category.order", "3")
+  @runtimeProperty("ModSettings.displayName", "Read shards")
+  @runtimeProperty("ModSettings.description", "Read a shard aloud when it opens, from a pickup or from Journal > Shards, and speak each title as you move through the Shards list. Encrypted shards read their title only.")
+  public let shardsEnabled: Bool = true;
+
+  @runtimeProperty("ModSettings.mod", "FreeTTS")
+  @runtimeProperty("ModSettings.category", "Shards")
+  @runtimeProperty("ModSettings.category.order", "3")
+  @runtimeProperty("ModSettings.displayName", "Shard speech rate")
+  @runtimeProperty("ModSettings.description", "0 is the Windows voice's own speed. Negative is slower, positive is faster.")
+  @runtimeProperty("ModSettings.step", "1")
+  @runtimeProperty("ModSettings.min", "-10")
+  @runtimeProperty("ModSettings.max", "10")
+  @runtimeProperty("ModSettings.dependency", "shardsEnabled")
+  public let shardRate: Int32 = 0;
+
+  @runtimeProperty("ModSettings.mod", "FreeTTS")
+  @runtimeProperty("ModSettings.category", "Shards")
+  @runtimeProperty("ModSettings.category.order", "3")
+  @runtimeProperty("ModSettings.displayName", "Keep reading after closing")
+  @runtimeProperty("ModSettings.description", "Off: closing a shard stops the reading. On: the reading goes on while you play, until something else is spoken (a quickhack, a dialogue choice, a map pin, another shard).")
+  @runtimeProperty("ModSettings.dependency", "shardsEnabled")
+  public let shardKeepReading: Bool = false;
+
+  @runtimeProperty("ModSettings.mod", "FreeTTS")
+  @runtimeProperty("ModSettings.category", "Voice")
+  @runtimeProperty("ModSettings.category.order", "4")
   @runtimeProperty("ModSettings.displayName", "Voice")
   @runtimeProperty("ModSettings.description", "Which installed voice speaks. Voice n is the nth voice in the plugin's startup log; on apply the mod says the chosen voice's name in that voice and remembers it by name, so the number shown can go stale after Windows adds or removes voices.")
   @runtimeProperty("ModSettings.displayValues.Default", "Windows default")
@@ -117,7 +144,7 @@ public class FreeTTSSettings extends ScriptableSystem {
 
   @runtimeProperty("ModSettings.mod", "FreeTTS")
   @runtimeProperty("ModSettings.category", "Voice")
-  @runtimeProperty("ModSettings.category.order", "3")
+  @runtimeProperty("ModSettings.category.order", "4")
   @runtimeProperty("ModSettings.displayName", "Output")
   @runtimeProperty("ModSettings.description", "Automatic speaks through NVDA whenever it is running (in your NVDA voice and speed, and on a braille display), otherwise through the Windows voice. Windows voice ignores NVDA.")
   @runtimeProperty("ModSettings.displayValues.Automatic", "Automatic")
